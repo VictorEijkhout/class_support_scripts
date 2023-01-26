@@ -1,4 +1,17 @@
 #!/bin/bash
+################################################################
+####
+#### Extract homework submissions.
+#### Usage: check_hw.sh name
+#### 
+#### This
+#### 1. creates a directory `name'
+#### 2. for each directory
+#### 2b. find subdirectory `name'
+#### 3. take the *first* file with c/cxx/cpp/py extention
+#### 4. copy that file to the central `name' directory
+####
+################################################################
 
 if [ $# -lt 1 ] ; then
     echo "Usage: $0 homeworkname"
