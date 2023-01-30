@@ -6,7 +6,7 @@
 ################################################################
 
 if [ $# -eq 0 ] ; then 
-    echo "Usage: $0 studentname"
+    echo "Usage: $0 repo name"
     exit 1
 fi
 
@@ -16,4 +16,13 @@ if [ ! -d $s ] ; then
     exit 1
 fi
 
-open https://github.com/$s
+cd $s
+url=$( git config --get remote.origin.url )
+url=$( echo $url | cut -d ":" -f 2 )
+name=$( echo $url | cut -d "/" -f 1 )
+repo=$( echo $url | cut -d "/" -f 2 )
+
+# https://github.com/VictorEijkhout/class_support_scripts
+echo "https://github.com/$name/$repo"
+
+
