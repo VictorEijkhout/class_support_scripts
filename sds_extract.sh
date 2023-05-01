@@ -36,12 +36,12 @@ for u in * ; do
 		    if [[ "$( echo "$dd" | tr A-Z a-z )" == *${HW}* ]] ; then 
 			found=1
 			if [ ! -z "${dir}" ] ; then 
-			    src=$( ls -d *${dd}* 2>/dev/null \
-				| awk '{print $1}' )
+			    src="$( ls -d *${dd}* 2>/dev/null \
+	 			 | awk '{print $1}' )"
 			    if [ -z "${src}" ] ; then echo "Internal Error for student $u"
 			    else
-				rm -rf $hwdir/${u}_project/$src
-				cp -r $src $hwdir/${u}_project
+				rm -rf $hwdir/${u}_project/"$src"
+				cp -r "$src" $hwdir/${u}_project
 			    fi
 			else
 			    src=$( ls $dd/*.{c,cxx,cpp,py} 2>/dev/null \
