@@ -40,6 +40,7 @@ for u in * ; do
 				| awk '{print $1}' )
 			    if [ -z "${src}" ] ; then echo "Internal Error for student $u"
 			    else
+				rm -rf $hwdir/${u}_project/$src
 				cp -r $src $hwdir/${u}_project
 			    fi
 			else
