@@ -25,6 +25,9 @@ HW=$1
 mkdir -p $HW
 hwdir=`pwd`/$HW
 
+# set nonzero for trace output
+x=
+
 for u in * ; do 
     if [ -d "$u" ] ; then 
 	( cd "$u"
@@ -33,31 +36,34 @@ for u in * ; do
 	    for dd in * ; do 
 		if [ -d "$dd" ] ; then 
 		    ## see if it matches (zsh test) the homework
-		    if [[ "$( echo "$dd" | tr A-Z a-z )" == *${HW}* ]] ; then 
+		    if [ ! -z "$x" ] ; then echo "testing $u/$dd"; fi
+		    stdname=$( echo "$dd" | tr A-Z a-z | tr -d "_ " )
+		    if [[ "$stdname" == *${HW}* ]] ; then 
 			found=1
+			if [ ! -z "$x" ] ; then echo "found $u/$dd" ; fi 
 			if [ ! -z "${dir}" ] ; then 
 			    src="$( ls -d *${dd}* 2>/dev/null \
 	 			 | awk '{print $1}' )"
 			    if [ -z "${src}" ] ; then echo "Internal Error for student $u"
 			    else
-				rm -rf $hwdir/${u}_project/"$src"
-				cp -r "$src" $hwdir/${u}_project
+				rm -rf "$hwdir/${u}_project/$src"
+				cp -r "$src" "$hwdir/${u}_project"
 			    fi
 			else
-			    src=$( ls $dd/*.{c,cxx,cpp,py} 2>/dev/null \
+			    src=$( ls $dd/*.{c,cxx,cpp,py,pdf} 2>/dev/null \
 				| awk '{print $1}' )
 			    n=$( echo $src | cut -d '.' -f 1 )
 			    e=$( echo $src | cut -d '.' -f 2 )
 			    tgt=$u.$e
 			    #echo "copy $src to $tgt"
-			    cp $src $hwdir/$tgt
+			    if [ ! -z "$x" ] ; then cp "$src" "$hwdir/$tgt" ; fi
 			fi
 		    fi
 		fi
 	    done
-	    if [ $found -eq 0 ] ; then
-		echo "$u : no homework ${HW} found"
-	    fi
+	    # if [ $found -eq 0 ] ; then
+	    # 	echo "$u : no homework ${HW} found"
+	    # fi
 	)
     fi
 done
