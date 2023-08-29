@@ -23,4 +23,6 @@ for d in * ; do
 	    )
 	fi
     fi
-done
+done 2>&1 | tee pull.log
+echo "see pull.log"
+
