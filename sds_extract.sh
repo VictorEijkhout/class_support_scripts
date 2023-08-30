@@ -69,8 +69,8 @@ for u in $users ; do
 			    cp -r "$src" "$hwdir/${u}_project"
 			fi
 		    else
-			for src in $dd/*.pdf $dd/*.cxx $dd/*.cpp ; do 
-			    #echo " .. test file $src"
+			for src in "$dd"/*.pdf "$dd"/*.cxx "$dd"/*.cpp ; do 
+			    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
 			    if [ -f "$src" ] ; then 
 				if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
 				n=$( echo $src | cut -d '.' -f 1 )
@@ -89,7 +89,8 @@ for u in $users ; do
 	fi
 	popd >/dev/null
     fi
-done
+done | tee extract.log
+echo "see extract.log"
 if [ ! -z "$unotfound" ] ; then
     echo "Homework not found for: $unotfound"
 fi
