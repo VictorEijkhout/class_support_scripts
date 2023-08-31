@@ -19,8 +19,14 @@ if [ ! -f "$infofile" ] ; then
 fi
 
 cat $infofile \
-    cut -d ',' -f $1,$3 \
-    awk -F ',' -v inval=$2 \
-    '$1~inval /print $2/'
+    | tr A-Z a-z \
+    | tr -d ' ' \
+    | cut -d ',' -f $incol -f $outcol \
+    | awk -F ',' -v incol=$incol -v outcol=$outcol \
+	  '{ if (incol>outcol) print $2 FS $1; else print $1 FS $2 }' \
+    | awk -F ',' -v inval=$inval \
+	  '\
+	  $1~inval { print $2 }\
+	  '
 
 
