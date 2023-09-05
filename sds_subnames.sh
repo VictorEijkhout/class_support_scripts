@@ -16,7 +16,7 @@ subnames=
 pushd $dir
 for p in *.$ext ; do
     pb=${p%%.pdf}
-    echo "$p -> $pb"
+    #echo "$p -> $pb"
     subnames="$subnames $pb"
 done
 popd

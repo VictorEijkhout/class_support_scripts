@@ -18,9 +18,10 @@ function usage {
     exit 0
 }
 
-if [ $# -lt 1 ] ; then
+if [ $# -lt 1 -o $1 = "-h" ] ; then
     usage
 fi
+
 x=0
 users=$( ls )
 while [ $# -gt 1 ] ; do
@@ -65,8 +66,8 @@ for u in $users ; do
 	 				 | awk '{print $1}' )"
 			if [ -z "${src}" ] ; then echo "Internal Error for student $u"
 			else
-			    rm -rf "$hwdir/${u}_project/$src"
-			    cp -r "$src" "$hwdir/${u}_project"
+			    rm -rf "$hwdir/${u}_dir/$src"
+			    cp -r "$src" "$hwdir/${u}_dir"
 			fi
 		    else
 			for src in "$dd"/*.pdf "$dd"/*.cxx "$dd"/*.cpp ; do 
