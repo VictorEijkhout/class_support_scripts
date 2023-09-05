@@ -16,5 +16,3 @@ for r in $( cat AllRepos.txt ) ; do
 	git clone $r $n
     fi
 done
-
-
