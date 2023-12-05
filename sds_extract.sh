@@ -23,7 +23,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
     usage
 fi
 
-x=0
+x=
 users=$( ls )
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
@@ -44,9 +44,6 @@ echo "Extracting: ${HW}" && echo "in users: $users" && echo
 
 mkdir -p $HW
 hwdir=`pwd`/$HW
-
-# set nonzero for trace output
-x=1
 
 for u in $users ; do 
     if [ -d "$u" ] ; then 
@@ -69,6 +66,9 @@ for u in $users ; do
 			else
 			    rm -rf "$hwdir/${u}_dir/$src"
 			    cp -r "$src" "$hwdir/${u}_dir"
+			    if [ ! -z "$x" ] ; then
+				echo " .. copy <<$src>> to <<$hwdir/${u}_dir>>"
+			    fi
 			fi
 		    else
 			for src in "$dd"/*.pdf "$dd"/*.cxx "$dd"/*.cpp ; do 
