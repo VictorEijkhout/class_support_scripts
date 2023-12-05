@@ -21,20 +21,7 @@ fi
 cat $infofile \
     | tr A-Z a-z \
     | tr -d ' ' \
-    | tr , ' ' \
     | grep $inval \
-    | awk '{printf("3%s3 6%s6\n",$3,$6)}' \
-    | cat
-
-echo \
-    | awk -v outcol=$outcol -v incol=$incol '{print "3" $3 "3 6" $6 "6"} \
-        {print $(incol) " " $(outcol) }' \
-    | cut -d ',' -f $incol -f $outcol \
-    | awk -F "," -v incol=$incol -v outcol=$outcol \
-	  '{ if (incol>outcol) print $2 " " $1; else print $1 " " $2 }' \
-    | awk -F ',' -v inval=$inval \
-	  '\
-	  $1~inval { print $2 }\
-	  ' >/dev/null
-
+    | awk -F "," -v incol=$incol -v outcol=$outcol -v inval=$inval \
+	  '$(incol)~inval { print $(outcol) }'
 
