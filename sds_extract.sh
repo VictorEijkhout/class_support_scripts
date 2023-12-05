@@ -15,10 +15,11 @@
 
 function usage {
     echo "Usage: $0 [ -h ] [ -d ] [ -x ] [ -u user ] homeworkname"
+    echo "    -d : find directory by that name and copy as directory"
     exit 0
 }
 
-if [ $# -lt 1 -o $1 = "-h" ] ; then
+if [ $# -lt 1 -o "$1" = "-h" ] ; then
     usage
 fi
 
