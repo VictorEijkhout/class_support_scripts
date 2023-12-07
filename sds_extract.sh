@@ -58,17 +58,13 @@ for u in $users ; do
 		stdname=$( echo "$dd" | tr A-Z a-z | tr -d "_ " )
 		if [[ "$stdname" == *${HW}* ]] ; then 
 		    found=1
-		    if [ ! -z "$x" ] ; then echo " -- Found dir $u/$dd" ; fi 
-		    if [ ! -z "${dir}" ] ; then 
-			src="$( ls -d *${dd}* 2>/dev/null \
-	 				 | awk '{print $1}' )"
-			if [ -z "${src}" ] ; then echo "Internal Error for student $u"
-			else
-			    rm -rf "$hwdir/${u}_dir/$src"
-			    cp -r "$src" "$hwdir/${u}_dir"
-			    if [ ! -z "$x" ] ; then
-				echo " .. copy <<$src>> to <<$hwdir/${u}_dir>>"
-			    fi
+		    if [ ! -z "$x" ] ; then echo " -- Found dir <<$u/$dd>>" ; fi 
+		    if [ ! -z "${dir}" ] ; then
+			src="${dd}"
+			rm -rf "$hwdir/${u}_dir/$src"
+			cp -r "$src" "$hwdir/${u}_dir"
+			if [ ! -z "$x" ] ; then
+			    echo " .. copy <<$src>> to <<$hwdir/${u}_dir>>"
 			fi
 		    else
 			for src in "$dd"/*.pdf "$dd"/*.cxx "$dd"/*.cpp ; do 
