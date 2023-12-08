@@ -5,23 +5,36 @@
 ####
 ################################################################
 
-# optional argument: single user to update
-if [ $# -eq 1 ] ; then
-    targetdir=$1
+function usage {
+    echo "Usage: $0 [ -h ] [ -x ] [ -u user ] homeworkname"
+    exit 0
+}
+
+if [ $# -lt 1 ] ; then
+    usage
 fi
 
-for d in * ; do 
-    # if no specific target, or this is the specific target
-    if [ -z "$targetdir" -o "$d" = "$targetdir" ] ; then
-	if [ -d "$d" -a -d "$d/.git" ] ; then 
-	    echo "$d"
-	    ( cd "$d"
-	      git pull >../gitmsg 2>&1
-	      if [ $( cat ../gitmsg | grep "no such ref" | wc -l ) -gt 0 ] ; then
-		  echo " .. main branch problem in $d"
-	      fi
-	    )
-	fi
+x=
+users=$( ls )
+while [ $# -gt 0 ] ; do
+    if [ "$1" = "-h" ] ; then
+	usage
+    elif [ "$1" = "-x" ] ; then
+	x=1 && shift
+    elif [ "$1" = "-u" ] ; then
+	shift && users=$1 && shift
+    fi
+done
+
+for d in ${users} ; do 
+    if [ -d "$d" -a -d "$d/.git" ] ; then 
+	if [ ! -z "${x}" ] ; then echo "pulling $d" ; fi
+	( cd "$d"
+	  git pull >../gitmsg 2>&1
+	  if [ $( cat ../gitmsg | grep "no such ref" | wc -l ) -gt 0 ] ; then
+	      echo " .. main branch problem in $d"
+	  fi
+	)
     fi
 done 2>&1 | tee pull.log
 echo "see pull.log"
