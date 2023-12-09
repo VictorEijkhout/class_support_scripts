@@ -6,13 +6,9 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -u user ] homeworkname"
+    echo "Usage: $0 [ -h ] [ -x ] [ -u user ]"
     exit 0
 }
-
-if [ $# -lt 1 ] ; then
-    usage
-fi
 
 x=
 users=$( ls )
