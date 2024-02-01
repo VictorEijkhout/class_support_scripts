@@ -14,7 +14,8 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -d ] [ -x ] [ -u user ] homeworkname"
+    echo "Usage: $0 [ -h ] [ -a altname ] [ -d ] [ -x ] [ -u user ] homeworkname"
+    echo "    -a : alternative homework name"
     echo "    -d : find directory by that name and copy as directory"
     exit 0
 }
@@ -23,11 +24,14 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
     usage
 fi
 
+altname=
 x=
 users=$( ls )
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
 	usage
+    elif [ "$1" = "-a" ] ; then
+	shift && altname=$1 && shift
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     elif [ "$1" = "-d" ] ; then
@@ -56,7 +60,7 @@ for u in $users ; do
 		## see if it matches (zsh test) the homework
 		if [ ! -z "$x" ] ; then echo && echo " .. testing dir $dd"; fi
 		stdname=$( echo "$dd" | tr A-Z a-z | tr -d "_ " )
-		if [[ "$stdname" == *${HW}* ]] ; then 
+		if [ "$stdname" == *${HW}* -o "$stdname" == "$altname" ] ; then 
 		    found=1
 		    if [ ! -z "$x" ] ; then echo " -- Found dir <<$u/$dd>>" ; fi 
 		    if [ ! -z "${dir}" ] ; then
@@ -82,7 +86,11 @@ for u in $users ; do
 	    fi
 	done
 	if [ $found -eq 0 ] ; then
-	    echo " .. $u : no homework ${HW} found"
+	    if [ ! -z "$altname" ] ; then 
+		echo " .. $u : no homework ${HW} or ${altname} found"
+	    else
+		echo " .. $u : no homework ${HW} found"
+	    fi
 	    unotfound="$unotfound $u"
 	fi
 	popd >/dev/null
