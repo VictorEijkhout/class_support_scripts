@@ -69,7 +69,9 @@ for u in $users ; do
 		  && if [ ! -z ${run} ] ; then \
 		      for f in * ; do \
 			  if [ -x $f ] ; then \
-			      ibrun -n 4 $f \
+			      cmdline="ibrun -n 4 $f" \
+				  && echo "cmdline=$cmdline" \
+				  && eval $cmdline \
 			      ; fi \
 		      ; done \
 		  ; fi \
