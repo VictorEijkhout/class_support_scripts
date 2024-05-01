@@ -43,61 +43,82 @@ done
 if [ $# -eq 0 ] ; then
     usage
 fi
-HW=$1
-echo "Extracting: ${HW}" && echo "in users: $users" && echo
+homeworkname=$1
+echo "Extracting: ${homeworkname}" && echo "from users: $users" && echo
 
-mkdir -p $HW
-hwdir=`pwd`/$HW
+rm -rf $homeworkname
+mkdir -p $homeworkname
+hwgather=`pwd`/$homeworkname
 
+function copy_hw_files () {
+		    for src in "$subdir"/*.pdf "$subdir"/*.cxx "$subdir"/*.cpp ; do 
+			if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
+			if [ -f "$src" ] ; then 
+			    if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
+			    n=$( echo $src | cut -d '.' -f 1 )
+			    e=$( echo $src | cut -d '.' -f 2 )
+			    tgt=$u.$e
+			    cp "$src" "${hwgather}/$tgt" 
+			fi
+		    done 2>/dev/null
+}
+
+function copy_hw_dir () {
+    u=$1 ; subdir=$2 ; hwgather=$3
+    rm -rf "${hwgather}/${u}_dir/${subdir}"
+    cp -r "${subdir}" "${hwgather}/${u}_dir"
+    if [ ! -z "$x" ] ; then
+	echo " .. copy <<$subdir>> to <<$hwgather/${u}_dir>>"
+    fi
+}
+
+function search_student () {
+    u=$1 ; homeworkname=$2 ; altname=$3 ; hwgather=$4
+	## go through all the directories of this students
+    founddir="0"
+    for subdir in * ; do 
+	if [ -d "$subdir" ] ; then 
+	    ## see if it matches (zsh test) the homework
+	    normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
+	    if [[ "$normalized_name" == *${homeworkname}* ]] ; then founddir="${subdir}" ; fi
+	    if [[ "$normalized_name" == *${altname}* ]]      ; then founddir="${subdir}" ; fi
+	    if [ "${founddir}" != "0" ] ; then
+		echo " -- Found dir <<$u/$subdir>>" 
+		if [ ! -z "${dir}" ] ; then
+		    copy_hw_dir "${u}" "${subdir}" "${hwgather}"
+		else
+		    copy_hw_files
+		fi
+		break
+	    fi
+	fi
+    done
+    if [ "${founddir}" = "0" ] ; then
+	echo " .. not found ${homeworkname} or ${altname}" ; found=0
+    else found=1 ; fi
+}
+
+success=
+failed=
 for u in $users ; do 
     if [ -d "$u" ] ; then 
 	if [ ! -z "$x" ] ; then echo && echo "Testing user $u"; fi
 	pushd "$u" >/dev/null
 	found=0
-	## go through all the directories of this students
-	for dd in * ; do 
-	    if [ -d "$dd" ] ; then 
-		## see if it matches (zsh test) the homework
-		if [ ! -z "$x" ] ; then echo && echo " .. testing dir $dd"; fi
-		stdname=$( echo "$dd" | tr A-Z a-z | tr -d "_ " )
-		if [[ "$stdname" == *${HW}* ]] ; then found=1 ; fi
-		if [[ "$stdname" == *${altname}* ]] ; then found=1 ; fi
-		if [ ${found} = "1" ] ; then
-		    if [ ! -z "$x" ] ; then echo " -- Found dir <<$u/$dd>>" ; fi 
-		    if [ ! -z "${dir}" ] ; then
-			src="${dd}"
-			rm -rf "$hwdir/${u}_dir/$src"
-			cp -r "$src" "$hwdir/${u}_dir"
-			if [ ! -z "$x" ] ; then
-			    echo " .. copy <<$src>> to <<$hwdir/${u}_dir>>"
-			fi
-		    else
-			for src in "$dd"/*.pdf "$dd"/*.cxx "$dd"/*.cpp ; do 
-			    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
-			    if [ -f "$src" ] ; then 
-				if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
-				n=$( echo $src | cut -d '.' -f 1 )
-				e=$( echo $src | cut -d '.' -f 2 )
-				tgt=$u.$e
-				cp "$src" "$hwdir/$tgt" 
-			    fi
-			done 2>/dev/null
-		    fi
-		fi
-	    fi
-	done
+	search_student "${u}" "${homeworkname}" "${altname}" "${hwgather}"
 	if [ $found -eq 0 ] ; then
+	    failed="${failed} $u"
 	    if [ ! -z "$altname" ] ; then 
-		echo " .. $u : no homework ${HW} or ${altname} found"
+		echo " .. $u : no homework ${homeworkname} or ${altname} found"
 	    else
-		echo " .. $u : no homework ${HW} found"
+		echo " .. $u : no homework ${homeworkname} found"
 	    fi
-	    unotfound="$unotfound $u"
+	else
+	    success="${success} $u"
 	fi
 	popd >/dev/null
     fi
 done | tee extract.log
 echo "see extract.log"
-if [ ! -z "$unotfound" ] ; then
-    echo "Homework not found for: $unotfound"
-fi
+echo "Found homework for: ${success}"
+echo "Not found for: ${failed}"

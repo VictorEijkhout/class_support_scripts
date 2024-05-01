@@ -12,7 +12,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 x=
-dir=
+dir="."
 quiet=
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
@@ -23,18 +23,11 @@ while [ $# -gt 1 ] ; do
 	x=1 && shift
     elif [ "$1" = "-q" ] ; then
 	quiet=1 && shift
+    else
+	echo "Unrecognized option: <<$1>>" && exit 1
     fi
 done
 
-## check that the "-d dir" argument was given
-if [ -z "$dir" ] ; then
-    usage && exit 1
-fi
-
-## check on the destination
-if [ $# -eq 0 ] ; then
-    usage
-fi
 dest=$(pwd)/$1
 echo "Finding pdfs in ${dir} to copy to <<$dest>>"
 
@@ -43,8 +36,8 @@ if [ ! -d "${dir}" ] ; then
     exit 1
 fi
 if [ ! -d "${dest}" ] ; then
-    echo "Can not find destination directory <<$dir>>"
-    exit 1
+    echo "First creating dest dir: <<${dest}>>"
+    mkdir -p "${dest}"
 fi
 
 cd "${dir}"
