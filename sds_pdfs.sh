@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -q ] -d dir dest"
+    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -d dir ] dest"
     echo "    -x : command execution tracing"
     echo "    -q : quiet on missing and double pdfs"
     exit 0
@@ -35,7 +35,7 @@ fi
 if [ $# -eq 0 ] ; then
     usage
 fi
-dest=$1
+dest=$(pwd)/$1
 echo "Finding pdfs in ${dir} to copy to <<$dest>>"
 
 if [ ! -d "${dir}" ] ; then

@@ -60,8 +60,9 @@ for u in $users ; do
 		## see if it matches (zsh test) the homework
 		if [ ! -z "$x" ] ; then echo && echo " .. testing dir $dd"; fi
 		stdname=$( echo "$dd" | tr A-Z a-z | tr -d "_ " )
-		if [ "$stdname" == *${HW}* -o "$stdname" == "$altname" ] ; then 
-		    found=1
+		if [[ "$stdname" == *${HW}* ]] ; then found=1 ; fi
+		if [[ "$stdname" == *${altname}* ]] ; then found=1 ; fi
+		if [ ${found} = "1" ] ; then
 		    if [ ! -z "$x" ] ; then echo " -- Found dir <<$u/$dd>>" ; fi 
 		    if [ ! -z "${dir}" ] ; then
 			src="${dd}"
