@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -d dir ] dest"
+    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -d dir ] [ -u user ] dest"
     echo "    -x : command execution tracing"
     echo "    -q : quiet on missing and double pdfs"
     exit 0
@@ -14,11 +14,14 @@ fi
 x=
 dir="."
 quiet=
+user=
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
 	usage
     elif [ "$1" = "-d" ] ; then
 	shift && dir=$1 && shift
+    elif [ "$1" = "-u" ] ; then
+	shift && user=$1 && shift
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     elif [ "$1" = "-q" ] ; then
@@ -40,18 +43,28 @@ if [ ! -d "${dest}" ] ; then
     mkdir -p "${dest}"
 fi
 
-cd "${dir}"
-for d in * ; do
-    if [ -d "${d}" ] ; then
-	u=${d%%_dir}
-	if [ ! -z "${x}" ] ; then echo " .. investigate dir <<$d>>" ; fi
+function find_pdf () {
+    d=$1 ; dest=$2
+    u=${d%%_dir}
+    if [ $( ls ${d}/*.pdf >/dev/null | wc -l ) -eq 1 ] ; then
+	cp ${d}/*.pdf ${dest}/${u}.pdf
+	if [ ! -z "${x}" ] ; then
+	    echo " >> written root pdf to ${dest}/${u}.pdf" ; fi
+    else
 	npdf=$( find "${d}" -name \*.pdf -print | wc -l )
 	if [ $npdf -eq 0 -a -z "${quiet}" ] ; then
 	    echo " -- could not find pdf in <<$d>>" ; fi
 	if [ $npdf -gt 1 -a -z "${quiet}" ] ; then
 	    echo " -- more than one pdf in <<$d>>" ; fi
 	find "${d}" -name \*.pdf -exec cp {} $dest/${u}.pdf \;
-	if [ ! -z "${x}" ] ; then echo " >> written $dest/${u}.pdf" ; fi
+    fi
+}
+
+cd "${dir}"
+for d in $( if [ -z ${user} ] ; then ls * ; echo echo ${user} ; fi ) ; do
+    if [ -d "${d}" ] ; then
+	if [ ! -z "${x}" ] ; then echo " .. investigate dir <<$d>>" ; fi
+	find_pdf $d $dest
     fi
 done
 
