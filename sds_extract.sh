@@ -14,7 +14,7 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -a altname ] [ -d ] [ -x ] [ -u user ] homeworkname"
+    echo "Usage: $0 [ -h ] [ -a altname ] [ -d ] [ -t ] [ -x ] [ -u user ] homeworkname"
     echo "    -a : alternative homework name"
     echo "    -d : find directory by that name and copy as directory"
     exit 0
@@ -25,6 +25,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 altname=
+trace=
 x=
 users=$( ls )
 while [ $# -gt 1 ] ; do
@@ -32,6 +33,8 @@ while [ $# -gt 1 ] ; do
 	usage
     elif [ "$1" = "-a" ] ; then
 	shift && altname=$1 && shift
+    elif [ "$1" = "-t" ] ; then
+	trace=1 && shift
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     elif [ "$1" = "-d" ] ; then
@@ -80,8 +83,10 @@ function search_student () {
 	if [ -d "$subdir" ] ; then 
 	    ## see if it matches (zsh test) the homework
 	    normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
-	    if [[ "$normalized_name" == *${homeworkname}* ]] ; then founddir="${subdir}" ; fi
-	    if [[ "$normalized_name" == *${altname}* ]]      ; then founddir="${subdir}" ; fi
+	    if [ "$normalized_name" = "${homeworkname}" ] ; then
+		founddir="${subdir}" ; fi
+	    if [ ! -z "${altname}" -a "$normalized_name" = "${altname}" ] ; then
+		founddir="${subdir}" ; fi
 	    if [ "${founddir}" != "0" ] ; then
 		echo " -- Found dir <<$u/$subdir>>" 
 		if [ ! -z "${dir}" ] ; then
@@ -104,13 +109,13 @@ export failed
 success=
 failed=
 for u in $users ; do 
-    if [ -d "$u" ] ; then 
-	if [ ! -z "$x" ] ; then echo && echo "Testing user $u"; fi
+    if [ -d "$u" -a -d "${u}/.git" ] ; then 
+	if [ ! -z "$trace" ] ; then echo && echo "Testing user $u"; fi
 	pushd "$u" >/dev/null
 	found=0
 	search_student "${u}" "${homeworkname}" "${altname}" "${hwgather}"
 	if [ $found -eq 0 ] ; then
-	    # echo "failed: ${failed}"
+	    if [ ! -z "$trace" ] ; then echo " .. failed: ${u}" ; fi
 	    export failed="${failed} $u"
 	    # if [ ! -z "$altname" ] ; then 
 	    # 	echo " .. $u : no homework ${homeworkname} or ${altname} found"
@@ -118,6 +123,7 @@ for u in $users ; do
 	    # 	echo " .. $u : no homework ${homeworkname} found"
 	    # fi
 	else
+	    if [ ! -z "$trace" ] ; then echo " .. success: ${u}" ; fi
 	    export success="${success} $u"
 	    # echo "success: ${success}"
 	fi
