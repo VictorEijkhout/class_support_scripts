@@ -95,7 +95,6 @@ function search_student () {
     done
     if [ "${founddir}" = "0" ] ; then
 	## echo " .. not found ${homeworkname} or ${altname}"
-	export failed="${failed} $u"
 	found=0
     else found=1 ; fi
 }
@@ -111,19 +110,20 @@ for u in $users ; do
 	found=0
 	search_student "${u}" "${homeworkname}" "${altname}" "${hwgather}"
 	if [ $found -eq 0 ] ; then
-	    echo "failed: ${failed}"
-	    if [ ! -z "$altname" ] ; then 
-		echo " .. $u : no homework ${homeworkname} or ${altname} found"
-	    else
-		echo " .. $u : no homework ${homeworkname} found"
-	    fi
+	    # echo "failed: ${failed}"
+	    export failed="${failed} $u"
+	    # if [ ! -z "$altname" ] ; then 
+	    # 	echo " .. $u : no homework ${homeworkname} or ${altname} found"
+	    # else
+	    # 	echo " .. $u : no homework ${homeworkname} found"
+	    # fi
 	else
 	    export success="${success} $u"
-	    #echo "success: ${success}"
+	    # echo "success: ${success}"
 	fi
 	popd >/dev/null
     fi
-done | tee extract.log
+done 
 echo "see extract.log"
 echo "Found homework for: ${success}"
 echo "Not found for: ${failed}"

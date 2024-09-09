@@ -19,6 +19,8 @@ while [ $# -gt 0 ] ; do
 	x=1 && shift
     elif [ "$1" = "-u" ] ; then
 	shift && users=$1 && shift
+    else
+	echo "Unrecognized option: $1" && exit 1
     fi
 done
 
