@@ -7,7 +7,7 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -r (run) ] [ -u username ] homeworkname"
+    echo "Usage: $0 [ -r (run) ] [ -u username ] [ -x ] homeworkname"
 }
 
 if [ $# -lt 1 -o "$1" = "-h" ] ; then
@@ -16,6 +16,7 @@ fi
 
 run=
 users=
+x=
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
 	usage && exit 0
@@ -27,6 +28,8 @@ while [ $# -gt 1 ] ; do
 	run=1 && shift
     elif [ "$1" = "-u" ] ; then
 	shift && users=$1 && shift
+    elif [ "$1" = "-x" ] ; then
+	x=1 && shift
     fi
 done
 if [ $# -eq 0 ] ; then
@@ -35,50 +38,62 @@ fi
 # remaining argument is homework name
 HW=$1
 # remove tailing slash
-HW=${HW%%/}
-if [ ! -d "${HW}" ] ; then
-    echo "ERROR can not find homework directory: <<$HW>>" && usage && exit 2
+hw=${HW%%/}
+hwdir=$( pwd )/${hw}
+if [ ! -d "${hwdir}" ] ; then
+    echo "ERROR can not find homework directory: <<$hwdir>>; extract first?"
+    usage && exit 2
 else
     log=$( pwd )/${HW}.log
-    cd $HW
+    # everything happens in the homework dir
+    if [ ! -z ${x} ] ; then echo "Working in homework dir <<${hwdir}>>" ; fi 
 fi
+
+function build () {
+    srcdir=$1
+    rm -rf build 
+    mkdir build
+    pushd build
+    export CXX=${TACC_CXX}
+    cmake -D CMAKE_CXX_COMPILER=${TACC_CXX} \
+	  "${srcdir}"
+    make
+    if [ ! -z ${run} ] ; then
+	for f in * ; do
+	    if [ -x $f ] ; then
+		cmdline="ibrun -n 4 $f"
+		echo "cmdline=$cmdline"
+		eval $cmdline
+	    fi
+	done
+    fi
+    popd
+}
+
 if [ -z "$users" ] ; then
-    users=$( ls )
+    users=$( cd "${hwdir}" && ls | grep -v _dir | grep -v .log )
 fi
 ## users not all on one line: confusing
-## echo "Building $HW for users: $users"
+if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
+
 for u in $users ; do 
-    if [ -d "$u" ] ; then
-	user=${u%%_dir}
+    user=${u%%_dir}
+    userdir=${u}_dir
+    srcdir=${hwdir}/${userdir}
+    if [ -d "${srcdir}" ] ; then
 	echo && echo "==== student: ${user}"
-	srcdir=
-	if [ -f $u/CMakeLists.txt ] ; then
-	    srcdir=$u
-	elif [ -f $u/src/CMakeLists.txt ] ; then
-	    echo "    (found CMakeLists in src)"
-	    srcdir=$u/src
-	fi
-	if [ -z "$srcdir" ] ; then
-	    echo "WARNING can not find CMakeLists.txt for user <<$u>>"
+	if [ ! -f ${userdir}/CMakeLists.txt ] ; then
+	    altsrcdir=${userdir}/src
+	    if [ -f ${altsrcdir}/CMakeLists.txt ] ; then
+		echo "    (found CMakeLists in src)"
+		srcdir=${altsrcdir}
+	    fi 
 	else
-	    ( rm -rf build \
-		  && mkdir build \
-		  && cd build \
-		  && cmake ../${srcdir} \
-		  && make \
-		  && if [ ! -z ${run} ] ; then \
-		      for f in * ; do \
-			  if [ -x $f ] ; then \
-			      cmdline="ibrun -n 4 $f" \
-				  && echo "cmdline=$cmdline" \
-				  && eval $cmdline \
-			      ; fi \
-		      ; done \
-		  ; fi \
-		) 2>&1 | tee ${user}.log
+	    echo "WARNING can not find CMakeLists.txt for user <<$u>>" && break
 	fi
+	build "${srcdir}" 2>&1 | tee ${user}.log
     else
-	echo "WARNING unknown user: <<$u>>"
+	echo "WARNING unknown user: <<$user>> not found <<$srcdir>>"
     fi
-done | tee ${log}
+done | tee "${log}"
 echo && echo "See ${log}" && echo
