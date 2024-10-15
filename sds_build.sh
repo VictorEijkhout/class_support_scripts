@@ -71,7 +71,7 @@ function build () {
 }
 
 if [ -z "$users" ] ; then
-    users=$( cd "${hwdir}" && ls | grep -v _dir | grep -v .log )
+    users=$( cd "${hwdir}" && ls | grep -v .log | sed -e 's/_dir//' | sort -u )
 fi
 ## users not all on one line: confusing
 if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
