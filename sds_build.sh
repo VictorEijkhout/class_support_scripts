@@ -11,7 +11,7 @@ function usage {
 }
 
 if [ $# -lt 1 -o "$1" = "-h" ] ; then
-    usage
+    usage && exit 0
 fi
 
 run=
