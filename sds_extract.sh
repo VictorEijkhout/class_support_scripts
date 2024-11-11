@@ -89,6 +89,14 @@ function search_student () {
 		founddir="${subdir}" ; fi
 	    if [ "${founddir}" != "0" ] ; then
 		echo " -- Found dir <<$u/$subdir>>" 
+		autosave=$( ls ${subdir}/* | grep '~$' | wc -l )
+		if [ $autosave -gt 0 ] ; then
+		    echo "Warning: has autosave files"
+		fi
+		executable=$( x=0 && for f in ${subdir}/* ; do if [ -x "$f" ] ; then x=$(( x+1 )) ; fi ; done && echo $x )
+		if [ $executable -gt 0 ] ; then
+		    echo "Warning: has executables"
+		fi
 		if [ ! -z "${dir}" ] ; then
 		    copy_hw_dir "${u}" "${subdir}" "${hwgather}"
 		else
