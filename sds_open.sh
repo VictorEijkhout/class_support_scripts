@@ -5,21 +5,23 @@
 ####
 ################################################################
 
-if [ $# -eq 0 ] ; then
-    echo "Usage: $0 dir"
+if [ $# -eq 0 -o $1 = "-h" ] ; then
+    echo "Usage: $0 dir [dir [dir ..."
     exit 1
 fi
 
-d=$1
-if [ -d "$d" -a -d "$d/.git" ] ; then
-    url=$( sds_url.sh $d )
-    which open 2>/dev/null
-    if [ $? -eq 0 ] ; then 
-	echo "opening $url"
-	open $url
-    else
-	echo $url
+for d in $* ; do
+    if [ -d "$d" -a -d "$d/.git" ] ; then
+	url=$( sds_url.sh $d )
+	which open 2>/dev/null
+	if [ $? -eq 0 ] ; then 
+	    echo "opening $url"
+	    open $url
+	    sleep 1
+	else
+	    echo $url
+	fi
     fi
-fi
+done
 
 
