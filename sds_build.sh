@@ -2,6 +2,9 @@
 ################################################################
 ####
 #### Build homework submissions.
+#### built in the homework folder,
+#### so that we can edit to fix things
+####
 #### Usage: sds_build.sh name
 #### 
 ################################################################
@@ -50,13 +53,14 @@ else
 fi
 
 function build () {
-    srcdir=$1
-    rm -rf build 
-    mkdir build
-    pushd build
+    user=$1
+    echo && echo "==== student: ${user}"
+    userdir="$(pwd)/${user}_dir"
+    builddir=build_${user} && rm -rf ${builddir} && mkdir ${builddir}
+    pushd ${builddir}
     export CXX=${TACC_CXX}
     cmake -D CMAKE_CXX_COMPILER=${TACC_CXX} \
-	  "${srcdir}"
+	  "${userdir}"
     make
     if [ ! -z ${run} ] ; then
 	for f in * ; do
@@ -80,24 +84,17 @@ fi
 ## users not all on one line: confusing
 if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
 
-for u in $users ; do 
-    user=${u%%_dir}
-    userdir=${u}_dir
-    srcdir=${hwdir}/${userdir}
-    if [ -d "${srcdir}" ] ; then
-	echo && echo "==== student: ${user}"
+pushd ${hw}
+for user in $users ; do 
+    userdir=${user}_dir
+    if [ -d "${userdir}" ] ; then
 	if [ ! -f ${userdir}/CMakeLists.txt ] ; then
-	    altsrcdir=${userdir}/src
-	    if [ -f ${altsrcdir}/CMakeLists.txt ] ; then
-		echo "    (found CMakeLists in src)"
-		srcdir=${altsrcdir}
-	    fi 
-	else
-	    echo "WARNING can not find CMakeLists.txt for user <<$u>>" && break
+	    echo "WARNING can not find CMakeLists.txt for user <<$u>>" && continue
 	fi
-	build "${srcdir}" 2>&1 | tee ${user}.log
+	build ${user} 2>&1 | tee ${user}.log
     else
-	echo "WARNING unknown user: <<$user>> not found <<$srcdir>>"
+	echo "WARNING unknown user: <<$user_dir>> not found in <<$hw>>"
     fi
 done | tee "${log}"
+popd
 echo && echo "See ${log}" && echo
