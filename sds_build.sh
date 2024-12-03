@@ -54,7 +54,6 @@ fi
 
 function build () {
     user=$1
-    echo && echo "==== student: ${user}"
     userdir="$(pwd)/${user}_dir"
     builddir=build_${user} && rm -rf ${builddir} && mkdir ${builddir}
     pushd ${builddir}
@@ -79,13 +78,15 @@ function build () {
 }
 
 if [ -z "$users" ] ; then
-    users=$( cd "${hwdir}" && ls | grep -v .log | sed -e 's/_dir//' | sort -u )
+    users="$( sds_users.sh )"
 fi
 ## users not all on one line: confusing
-if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
+##if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
 
 pushd ${hw}
 for user in $users ; do 
+    user=${user%/}
+    echo && echo "==== student: ${user}"
     userdir=${user}_dir
     if [ -d "${userdir}" ] ; then
 	if [ ! -f ${userdir}/CMakeLists.txt ] ; then
@@ -93,7 +94,7 @@ for user in $users ; do
 	fi
 	build ${user} 2>&1 | tee ${user}.log
     else
-	echo "WARNING unknown user: <<$user_dir>> not found in <<$hw>>"
+	echo "WARNING unknown user: <<${userdir}>> not found in <<$hw>>"
     fi
 done | tee "${log}"
 popd

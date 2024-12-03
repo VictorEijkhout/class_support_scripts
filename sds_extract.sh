@@ -116,23 +116,24 @@ export success
 export failed
 success=
 failed=
-for u in $users ; do 
-    if [ -d "$u" -a -d "${u}/.git" ] ; then 
-	if [ ! -z "$trace" ] ; then echo && echo "Testing user $u"; fi
-	pushd "$u" >/dev/null
+for user in $users ; do 
+    user=${user%/}
+    if [ -d "$user" -a -d "${user}/.git" ] ; then 
+	if [ ! -z "$trace" ] ; then echo && echo "Testing user $user"; fi
+	pushd "$user" >/dev/null
 	found=0
-	search_student "${u}" "${homeworkname}" "${altname}" "${hwgather}"
+	search_student "${user}" "${homeworkname}" "${altname}" "${hwgather}"
 	if [ $found -eq 0 ] ; then
-	    if [ ! -z "$trace" ] ; then echo " .. failed: ${u}" ; fi
-	    export failed="${failed} $u"
+	    if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
+	    export failed="${failed} $user"
 	    # if [ ! -z "$altname" ] ; then 
-	    # 	echo " .. $u : no homework ${homeworkname} or ${altname} found"
+	    # 	echo " .. $user : no homework ${homeworkname} or ${altname} found"
 	    # else
-	    # 	echo " .. $u : no homework ${homeworkname} found"
+	    # 	echo " .. $user : no homework ${homeworkname} found"
 	    # fi
 	else
-	    if [ ! -z "$trace" ] ; then echo " .. success: ${u}" ; fi
-	    export success="${success} $u"
+	    if [ ! -z "$trace" ] ; then echo " .. success: ${user}" ; fi
+	    export success="${success} $user"
 	    # echo "success: ${success}"
 	fi
 	popd >/dev/null
