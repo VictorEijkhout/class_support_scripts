@@ -85,8 +85,9 @@ function search_student () {
 	    normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
 	    if [ "$normalized_name" = "${homeworkname}" ] ; then
 		founddir="${subdir}" ; fi
-	    if [ ! -z "${altname}" -a "$normalized_name" = "${altname}" ] ; then
-		founddir="${subdir}" ; fi
+	    if [ ! -z "${altname}" ] ; then
+		case ${normalized_name} in ( ${altname}* ) founddir="${subdir}" ;; esac
+	    fi
 	    if [ "${founddir}" != "0" ] ; then
 		echo " -- Found dir <<$u/$subdir>>" 
 		autosave=$( ls ${subdir}/* | grep '~$' | wc -l )
