@@ -70,7 +70,7 @@ function copy_hw_files () {
 	    fi
 	done 2>/dev/null
     else
-	for src in "$subdir"/*.pdf "$subdir"/*.cxx "$subdir"/*.cpp ; do 
+	for src in "$subdir"/*.${ext} ; do 
 	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
 	    if [ -f "$src" ] ; then 
 		if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
