@@ -6,6 +6,11 @@
 ####
 ################################################################
 
+if [ "$1" = "-h" ] ; then
+    echo "Usage: $0 # no arguments, this clones all"
+    exit 0
+fi
+
 if [ $# -gt 0 ] ; then
     repos="$( cat AllRepos.txt | grep $1 )"
 else

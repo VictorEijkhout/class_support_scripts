@@ -14,9 +14,10 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -a altname ] [ -d ] [ -t ] [ -x ] [ -u user ] homeworkname"
+    echo "Usage: $0 [ -h ] [ -a altname ] [ -d ] [ -e ext ] [ -t ] [ -x ] [ -u user ] homeworkname"
     echo "    -a : alternative homework name"
     echo "    -d : find directory by that name and copy as directory"
+    echo "    -e : only files of certain extension"
     exit 0
 }
 
@@ -25,6 +26,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 altname=
+ext=
 trace=
 x=
 users=$( ls )
@@ -33,6 +35,8 @@ while [ $# -gt 1 ] ; do
 	usage
     elif [ "$1" = "-a" ] ; then
 	shift && altname=$1 && shift
+    elif [ "$1" = "-e" ] ; then
+	shift && ext=$1 && shift
     elif [ "$1" = "-t" ] ; then
 	trace=1 && shift
     elif [ "$1" = "-x" ] ; then
@@ -54,16 +58,29 @@ mkdir -p $homeworkname
 hwgather=`pwd`/$homeworkname
 
 function copy_hw_files () {
-		    for src in "$subdir"/*.pdf "$subdir"/*.cxx "$subdir"/*.cpp ; do 
-			if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
-			if [ -f "$src" ] ; then 
-			    if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
-			    n=$( echo $src | cut -d '.' -f 1 )
-			    e=$( echo $src | cut -d '.' -f 2 )
-			    tgt=$u.$e
-			    cp "$src" "${hwgather}/$tgt" 
-			fi
-		    done 2>/dev/null
+    if [ ! -z "${ext}" ] ; then
+	for src in "$subdir"/*.${ext} ; do 
+	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
+	    if [ -f "$src" ] ; then 
+		if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
+		n=$( echo $src | cut -d '.' -f 1 )
+		e=$( echo $src | cut -d '.' -f 2 )
+		tgt=$u.$e
+		cp "$src" "${hwgather}/$tgt" 
+	    fi
+	done 2>/dev/null
+    else
+	for src in "$subdir"/*.pdf "$subdir"/*.cxx "$subdir"/*.cpp ; do 
+	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
+	    if [ -f "$src" ] ; then 
+		if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
+		n=$( echo $src | cut -d '.' -f 1 )
+		e=$( echo $src | cut -d '.' -f 2 )
+		tgt=$u.$e
+		cp "$src" "${hwgather}/$tgt" 
+	    fi
+	done 2>/dev/null
+    fi
 }
 
 function copy_hw_dir () {
@@ -127,15 +144,9 @@ for user in $users ; do
 	if [ $found -eq 0 ] ; then
 	    if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
 	    export failed="${failed} $user"
-	    # if [ ! -z "$altname" ] ; then 
-	    # 	echo " .. $user : no homework ${homeworkname} or ${altname} found"
-	    # else
-	    # 	echo " .. $user : no homework ${homeworkname} found"
-	    # fi
 	else
 	    if [ ! -z "$trace" ] ; then echo " .. success: ${user}" ; fi
 	    export success="${success} $user"
-	    # echo "success: ${success}"
 	fi
 	popd >/dev/null
     fi

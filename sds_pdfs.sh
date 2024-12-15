@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -d dir ] [ -u user ] dest"
+    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -u user ] homeworkname"
     echo "    -x : command execution tracing"
     echo "    -q : quiet on missing and double pdfs"
     exit 0
@@ -12,16 +12,15 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 x=
-dir="."
 quiet=
-user=
+users=$( ls )
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
 	usage
-    elif [ "$1" = "-d" ] ; then
-	shift && dir=$1 && shift
+    elif [ "$1" = "-a" ] ; then
+	shift && altname=$1 && shift
     elif [ "$1" = "-u" ] ; then
-	shift && user=$1 && shift
+	shift && users=$1 && shift
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     elif [ "$1" = "-q" ] ; then
@@ -30,6 +29,11 @@ while [ $# -gt 1 ] ; do
 	echo "Unrecognized option: <<$1>>" && exit 1
     fi
 done
+if [ $# -eq 0 ] ; then
+    usage
+fi
+homeworkname=$1
+echo "Extracting: ${homeworkname}/pdf" && echo "from users: $users" && echo
 
 dest=$(pwd)/$1
 echo "Finding pdfs in ${dir} to copy to <<$dest>>"
@@ -60,11 +64,23 @@ function find_pdf () {
     fi
 }
 
-cd "${dir}"
-for d in $( if [ -z ${user} ] ; then ls * ; echo echo ${user} ; fi ) ; do
-    if [ -d "${d}" ] ; then
-	if [ ! -z "${x}" ] ; then echo " .. investigate dir <<$d>>" ; fi
-	find_pdf $d $dest
+export success
+export failed
+success=
+for user in $users ; do 
+    user=${user%/}
+    if [ -d "$user" -a -d "${user}/.git" ] ; then 
+	if [ ! -z "$trace" ] ; then echo && echo "Testing user $user"; fi
+	pushd "$user" >/dev/null
+	found=0
+	search_student "${user}" "${homeworkname}" "${altname}" "${hwgather}"
+	if [ $found -eq 0 ] ; then
+	    if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
+	    export failed="${failed} $user"
+	else
+	    if [ ! -z "$trace" ] ; then echo " .. success: ${user}" ; fi
+	    export success="${success} $user"
+	fi
+	popd >/dev/null
     fi
-done
-
+done 
