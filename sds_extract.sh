@@ -53,9 +53,8 @@ fi
 homeworkname=$1
 echo "Extracting: ${homeworkname}" && echo "from users: $users" && echo
 
-rm -rf $homeworkname
-mkdir -p $homeworkname
 hwgather=`pwd`/$homeworkname
+mkdir -p $hwgather
 
 ##
 ## copy student files, either single extension or all
@@ -93,11 +92,9 @@ export -f copy_hw_files
 ##
 function copy_hw_dir () {
     u=$1 ; subdir="$2" ; hwgather=$3
-    rm -rf "${hwgather}/${u}_dir/${subdir}"
-    cp -r "${subdir}" "${hwgather}/${u}_dir"
-    # if [ ! -z "$x" ] ; then
-	echo " .. copy <<$subdir>> to <<$hwgather/${u}_dir>>"
-    # fi
+    rm -rf "${hwgather}/${u}/${subdir}"
+    cp -r "${subdir}" "${hwgather}/${u}"
+    echo " .. copy <<$subdir>> to <<$hwgather/${u}>>"
 }
 export -f copy_hw_dir
 
@@ -159,6 +156,8 @@ success=
 failed=
 for user in $users ; do 
     user=${user%/}
+    # if is this a user, and not a homework gather:
+    rm -rf ${hwgather}/${user}
     if [ -d "$user" -a -d "${user}/.git" ] ; then 
 	if [ ! -z "$trace" ] ; then echo && echo "Testing user $user"; fi
 	pushd "$user" >/dev/null
