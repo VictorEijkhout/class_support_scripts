@@ -57,7 +57,11 @@ rm -rf $homeworkname
 mkdir -p $homeworkname
 hwgather=`pwd`/$homeworkname
 
+##
+## copy student files, either single extension or all
+##
 function copy_hw_files () {
+    u=$1 ; subdir="$2" ; hwgather=$3
     if [ ! -z "${ext}" ] ; then
 	for src in "$subdir"/*.${ext} ; do 
 	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
@@ -82,48 +86,67 @@ function copy_hw_files () {
 	done 2>/dev/null
     fi
 }
+export -f copy_hw_files
 
+##
+## copy whole directory from user
+##
 function copy_hw_dir () {
-    u=$1 ; subdir=$2 ; hwgather=$3
+    u=$1 ; subdir="$2" ; hwgather=$3
     rm -rf "${hwgather}/${u}_dir/${subdir}"
     cp -r "${subdir}" "${hwgather}/${u}_dir"
-    if [ ! -z "$x" ] ; then
+    # if [ ! -z "$x" ] ; then
 	echo " .. copy <<$subdir>> to <<$hwgather/${u}_dir>>"
+    # fi
+}
+export -f copy_hw_dir
+
+##
+## in student dir investigate each subdir
+##
+function search_student_dir () {
+    subdir="$1"; subdir=${subdir##*/} # remove ./
+    user=$2 ; homeworkname=$3 ; altname=$4 ; hwgather=$5 ; dir=$6
+    ## echo "Search <<$user/$subdir>> to match <<$homeworkname/$altname>>"
+    ## see if it matches the homework
+    normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
+    if [ "${normalized_name}" = "${homeworkname}" ] ; then
+	founddir="${subdir}" 
+	## echo " .. found <<${subdir}>>"
+    elif [ ! -z "${altname}" ] ; then
+	case ${normalized_name} in
+	    ( ${altname}* ) founddir="${subdir}" ;;
+	esac	
+    fi
+    if [ "${founddir}" != "0" ] ; then
+	echo " -- Found dir <<$user/$subdir>>" 
+	autosave=$( ls "${subdir}"/* | grep '~$' | wc -l )
+	if [ $autosave -gt 0 ] ; then
+	    echo "Warning: has autosave files"
+	fi
+	executable=$( x=0 && for f in "${subdir}"/* ; do if [ -x "$f" ] ; then x=$(( x+1 )) ; fi ; done && echo $x )
+	if [ $executable -gt 0 ] ; then
+	    echo "Warning: has executables"
+	fi
+	if [ ! -z "${dir}" ] ; then
+	    copy_hw_dir "${user}" "${subdir}" "${hwgather}"
+	else
+	    copy_hw_files "${user}" "${subdir}" "${hwgather}"
+	fi
+	return
     fi
 }
+export -f search_student_dir
 
+##
+## in the user dir search for `homeworkname' or `altname'
+##
 function search_student () {
     u=$1 ; homeworkname=$2 ; altname=$3 ; hwgather=$4
-	## go through all the directories of this students
-    founddir="0"
-    for subdir in * ; do 
-	if [ -d "$subdir" ] ; then 
-	    ## see if it matches (zsh test) the homework
-	    normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
-	    if [ "$normalized_name" = "${homeworkname}" ] ; then
-		founddir="${subdir}" ; fi
-	    if [ ! -z "${altname}" ] ; then
-		case ${normalized_name} in ( ${altname}* ) founddir="${subdir}" ;; esac
-	    fi
-	    if [ "${founddir}" != "0" ] ; then
-		echo " -- Found dir <<$u/$subdir>>" 
-		autosave=$( ls ${subdir}/* | grep '~$' | wc -l )
-		if [ $autosave -gt 0 ] ; then
-		    echo "Warning: has autosave files"
-		fi
-		executable=$( x=0 && for f in ${subdir}/* ; do if [ -x "$f" ] ; then x=$(( x+1 )) ; fi ; done && echo $x )
-		if [ $executable -gt 0 ] ; then
-		    echo "Warning: has executables"
-		fi
-		if [ ! -z "${dir}" ] ; then
-		    copy_hw_dir "${u}" "${subdir}" "${hwgather}"
-		else
-		    copy_hw_files
-		fi
-		break
-	    fi
-	fi
-    done
+    export founddir="0"
+    find . -maxdepth 1 -type d -exec \
+	 bash -c  'search_student_dir "$0" "$1" "$2" "$3" "$4" "$5" ' \
+                           {} "$u" "${homeworkname}" "${altname}" "$hwgather" "$dir" \; 
     if [ "${founddir}" = "0" ] ; then
 	## echo " .. not found ${homeworkname} or ${altname}"
 	found=0
