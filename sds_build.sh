@@ -10,7 +10,9 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -r (run) ] [ -u username ] [ -x ] homeworkname"
+    echo "Usage: $0 [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
+    echo "    -r : run after building"
+    echo "    -s : build in a subdirectory"
 }
 
 if [ $# -lt 1 -o "$1" = "-h" ] ; then
@@ -18,6 +20,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 run=
+subdir=
 users=
 x=
 while [ $# -gt 1 ] ; do
@@ -29,6 +32,8 @@ while [ $# -gt 1 ] ; do
 	dir=1 && shift
     elif [ "$1" = "-r" ] ; then
 	run=1 && shift
+    elif [ "$1" = "-s" ] ; then
+	shift && subdir=$1 && shift
     elif [ "$1" = "-u" ] ; then
 	shift && users=$1 && shift
     elif [ "$1" = "-x" ] ; then
@@ -47,15 +52,18 @@ if [ ! -d "${hwdir}" ] ; then
     echo "ERROR can not find homework directory: <<$hwdir>>; extract first?"
     usage && exit 2
 else
-    log=$( pwd )/${HW}.log
     # everything happens in the homework dir
     if [ ! -z ${x} ] ; then echo "Working in homework dir <<${hwdir}>>" ; fi 
 fi
 
+##
+## build in the homework directory
+##
 function build () {
-    user=$1
-    userdir="$(pwd)/${user}_dir"
-    builddir=build_${user} && rm -rf ${builddir} && mkdir ${builddir}
+    user=$1 ; userdir=$2 # userdir is absolute path
+    ## userdir="$(pwd)/${user}_dir"
+    builddir=$(pwd)/build_${user} && rm -rf ${builddir} && mkdir ${builddir}
+    echo "Using build dir: <<${builddir}>>"
     pushd ${builddir}
     export CXX=${TACC_CXX}
     cmake -D CMAKE_CXX_COMPILER=${TACC_CXX} \
@@ -79,6 +87,10 @@ function build () {
 
 if [ -z "$users" ] ; then
     users="$( sds_users.sh )"
+    logfile="${hwdir}/build_all.log"
+else
+    u=${users%%/}
+    logfile="${hwdir}/build_${u}.log"
 fi
 ## users not all on one line: confusing
 ##if [ ! -z ${x} ] ; then echo "Building $hw for users: $users" ; fi
@@ -87,15 +99,16 @@ pushd ${hw}
 for user in $users ; do 
     user=${user%/}
     echo && echo "==== student: ${user}"
-    userdir=${user}_dir
+    userdir=$(pwd)/${user}
+    if [ ! -z "${subdir}" ] ; then userdir="${userdir}"/"${subdir}" ; fi
     if [ -d "${userdir}" ] ; then
-	if [ ! -f ${userdir}/CMakeLists.txt ] ; then
-	    echo "WARNING can not find CMakeLists.txt for user <<$u>>" && continue
+	if [ ! -f "${userdir}"/CMakeLists.txt ] ; then
+	    echo "WARNING can not find CMakeLists.txt for user <<$user>>" && continue
 	fi
-	build ${user} 2>&1 | tee ${user}.log
+	build ${user} "${userdir}" 2>&1 | tee ${user}.log
     else
 	echo "WARNING unknown user: <<${userdir}>> not found in <<$hw>>"
     fi
-done | tee "${log}"
+done | tee "${logfile}"
 popd
-echo && echo "See ${log}" && echo
+echo && echo "See ${logfile}" && echo
