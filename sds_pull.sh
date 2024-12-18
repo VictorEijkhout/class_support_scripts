@@ -24,9 +24,10 @@ while [ $# -gt 0 ] ; do
     fi
 done
 
+echo "Pulling repos for <<${users}>>"
 for d in ${users} ; do 
     if [ -d "$d" -a -d "$d/.git" ] ; then 
-	if [ ! -z "${x}" ] ; then echo "pulling $d" ; fi
+	echo " .. pulling $d"
 	( cd "$d"
 	  git pull >../gitmsg 2>&1
 	  if [ $( cat ../gitmsg | grep "no such ref" | wc -l ) -gt 0 ] ; then
