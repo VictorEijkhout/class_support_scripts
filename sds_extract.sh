@@ -51,7 +51,9 @@ if [ $# -eq 0 ] ; then
     usage
 fi
 homeworkname=$1
-echo "Extracting: ${homeworkname}" && echo "from users: $users" && echo
+echo "Extracting: ${homeworkname}"
+uline=$( echo "$users" | awk '{u=u " " $1} END {print u}' )
+echo "from users: ${uline}"
 
 hwgather=`pwd`/$homeworkname
 mkdir -p $hwgather
@@ -80,6 +82,7 @@ function copy_hw_files () {
 		n=$( echo $src | cut -d '.' -f 1 )
 		e=$( echo $src | cut -d '.' -f 2 )
 		tgt=$u.$e
+		echo "    copy <<$src>> to <<${hwgather}/$tgt>>" 
 		cp "$src" "${hwgather}/$tgt" 
 	    fi
 	done 2>/dev/null
@@ -94,7 +97,7 @@ function copy_hw_dir () {
     u=$1 ; subdir="$2" ; hwgather=$3
     rm -rf "${hwgather}/${u}/${subdir}"
     cp -r "${subdir}" "${hwgather}/${u}"
-    echo " .. copy <<$subdir>> to <<$hwgather/${u}>>"
+    echo "    copy <<$subdir>> to <<$hwgather/${u}>>"
 }
 export -f copy_hw_dir
 
