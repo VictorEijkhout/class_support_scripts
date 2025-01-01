@@ -53,8 +53,9 @@ fi
 homeworkname=$1
 echo "Extracting: ${homeworkname}" && echo "from users: $users" && echo
 
-hwgather=`pwd`/$homeworkname
-mkdir -p $hwgather
+hwgather="$(pwd)/${homeworkname}"
+echo " .. gathering in dir <<${hwgather}>>"
+mkdir -p "${hwgather}"
 
 ##
 ## copy student files, either single extension or all
@@ -92,9 +93,13 @@ export -f copy_hw_files
 ##
 function copy_hw_dir () {
     u=$1 ; subdir="$2" ; hwgather=$3
-    rm -rf "${hwgather}/${u}/${subdir}"
-    cp -r "${subdir}" "${hwgather}/${u}"
-    echo " .. copy <<$subdir>> to <<$hwgather/${u}>>"
+    srcdir="${subdir}"
+    if [ ! -d "${srcdir}" ] ; then
+	echo "INTERNAL ERROR in pwd=$(pwd) no such srcdir: <<${srcdir}>>" && exit 1 ; fi
+    tardir="${hwgather}/${u}"
+    rm -rf "${tardir}"
+    echo " .. copy <<${srcdir}>> to <<${tardir}>>"
+    cp -r "${srcdir}" "${tardir}"
 }
 export -f copy_hw_dir
 
