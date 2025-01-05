@@ -62,7 +62,7 @@ fi
 function build () {
     user=$1 ; userdir=$2 # userdir is absolute path
     ## userdir="$(pwd)/${user}_dir"
-    builddir=$(pwd)/build_${user} && rm -rf ${builddir} && mkdir ${builddir}
+    builddir="$(pwd)/build_${user}" && rm -rf "${builddir}" && mkdir "${builddir}"
     echo "Using build dir: <<${builddir}>>"
     pushd ${builddir}
     export CXX=${TACC_CXX}
