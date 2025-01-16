@@ -26,4 +26,12 @@ for u in users.split():
                 userdict[u]["eid"] = v
             elif re.search("github",k):
                 userdict[u]["repo"] = v
-    print( userdict[u] )
+    #print( userdict[u] )
+    try :
+        realname = userdict[u]['realname']
+        lastname = re.search(r'[^ ]+$',realname).group(0)
+        firstname = re.sub(lastname,'',realname)
+        firstname = re.sub(' ','',firstname)
+        realname = f"{lastname},{firstname}"
+        print( f"{realname},{userdict[u]['taccname']},{userdict[u]['eid']},{userdict[u]['repo']}" )
+    except: continue
