@@ -2,22 +2,36 @@
 # -*- python -*-
 
 import re
+import sys
 import subprocess
 
-command = "sds_users.sh"
-p = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
-users = p.communicate()[0].strip().decode('utf-8')
+users = None
+if len(sys.argv)>1:
+    if sys.argv[1]=="-h":
+        print( f"Usage: {sys.argv[0]} [ -h ] [ -u user ]" )
+        sys.exit(0)
+    elif sys.argv[1]=="-u":
+        users = sys.argv[2]
+        sys.argv = sys.argv[2:]
+
+
+if not users:
+    command = "sds_users.sh"
+    p = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
+    users = p.communicate()[0].strip().decode('utf-8')
 #print(users)
+
 userdict = {}
 for u in users.split():
+    #print(u)
     userdict[u] = {}
     with open( f"{u}/README.md" ) as readme:
         for line in readme:
             if not re.search(":",line): continue
             line = line.strip('\n').strip(r"\\").strip("<br/>")
-            #print(line)
             k,v = line.split(":",1); k = k.lower()
-            v = v.lstrip(' ').rstrip(' ')
+            v = v.lstrip(' ').rstrip(' ').lstrip('*').rstrip('*')
+            #print( f"{line} = {k} : {v}" )
             if re.search("tacc",k):
                 userdict[u]["taccname"] = v
             elif re.search("name",k):
