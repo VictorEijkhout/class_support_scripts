@@ -13,6 +13,13 @@ function usage {
 x=
 users=$( ls )
 while [ $# -gt 0 ] ; do
+    if [ $# -eq 1 ] ; then
+	d="$1" && d=${d%/}
+	if [ -d "${d}" ] ; then
+	    users="${d}"
+	    break
+	fi
+    fi
     if [ "$1" = "-h" ] ; then
 	usage
     elif [ "$1" = "-x" ] ; then
