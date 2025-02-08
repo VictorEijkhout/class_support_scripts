@@ -31,7 +31,7 @@ while [ $# -gt 0 ] ; do
     fi
 done
 
-echo "Pulling repos for <<${users}>>"
+##echo "Pulling repos for <<${users}>>"
 for d in ${users} ; do 
     if [ -d "$d" -a -d "$d/.git" ] ; then 
 	echo " .. pulling $d"
