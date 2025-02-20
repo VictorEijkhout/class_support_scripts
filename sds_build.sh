@@ -71,7 +71,7 @@ function build () {
     make
     if [ ! -z ${run} ] ; then
 	for f in * ; do
-	    if [ -x $f ] ; then
+	    if [ -x "$f" -a ! -d "$f" ] ; then
 		if [ ! -z "${SLURM_JOB_UID}" ] ; then
 		    cmdline="ibrun -n 4 $f"
 		else
