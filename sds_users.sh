@@ -5,7 +5,7 @@ if [ ! -f AllRepos.txt ] ; then
     exit 1
 fi
 
-for r in $( cat AllRepos.txt ) ; do 
+for r in $( cat AllRepos.txt | grep -v '^#' ) ; do 
     n=$r
     n=${n%%/*}
     n=${n##*:}
