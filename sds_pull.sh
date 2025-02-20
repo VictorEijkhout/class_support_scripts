@@ -11,7 +11,7 @@ function usage {
 }
 
 x=
-users=$( ls )
+users=$( sds_users.sh )
 while [ $# -gt 0 ] ; do
     if [ $# -eq 1 ] ; then
 	d="$1" && d=${d%/}
