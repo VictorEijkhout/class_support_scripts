@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -u user ] homeworkname"
+    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -u user ] homework"
     echo "    -x : command execution tracing"
     echo "    -q : quiet on missing and double pdfs"
     exit 0
@@ -13,7 +13,7 @@ fi
 
 x=
 quiet=
-users=$( ls )
+users=$( sds_users.sh )
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
 	usage
@@ -32,14 +32,14 @@ done
 if [ $# -eq 0 ] ; then
     usage
 fi
-homeworkname=$1
-echo "Extracting: ${homeworkname}/pdf" && echo "from users: $users" && echo
+homework=$1
+echo "Extracting: ${homework}/pdf" && echo "from users: $users" && echo
 
-dest=$(pwd)/$1
-echo "Finding pdfs in ${dir} to copy to <<$dest>>"
+dest=$( pwd )/${homework}/pdfs
+echo "Finding pdfs in ${homework} to copy to <<$dest>>"
 
-if [ ! -d "${dir}" ] ; then
-    echo "Can not find source directory <<$dir>>"
+if [ ! -d "${homework}" ] ; then
+    echo "Can not find source directory <<$homework>>"
     exit 1
 fi
 if [ ! -d "${dest}" ] ; then
@@ -47,40 +47,43 @@ if [ ! -d "${dest}" ] ; then
     mkdir -p "${dest}"
 fi
 
+export pdf
 function find_pdf () {
-    d=$1 ; dest=$2
-    u=${d%%_dir}
-    if [ $( ls ${d}/*.pdf >/dev/null | wc -l ) -eq 1 ] ; then
-	cp ${d}/*.pdf ${dest}/${u}.pdf
-	if [ ! -z "${x}" ] ; then
-	    echo " >> written root pdf to ${dest}/${u}.pdf" ; fi
+    pdf=""
+    if [ $( ls *.pdf 2>/dev/null | wc -l ) -eq 1 ] ; then
+	pdf=$( ls *.pdf | head -n 1 )
     else
-	npdf=$( find "${d}" -name \*.pdf -print | wc -l )
-	if [ $npdf -eq 0 -a -z "${quiet}" ] ; then
-	    echo " -- could not find pdf in <<$d>>" ; fi
-	if [ $npdf -gt 1 -a -z "${quiet}" ] ; then
-	    echo " -- more than one pdf in <<$d>>" ; fi
-	find "${d}" -name \*.pdf -exec cp {} $dest/${u}.pdf \;
+	npdfs=$( find . -name \*.pdf | wc -l )
+	if [ $npdfs -eq 0 ] ; then
+	    echo "No pdfs found for user $user"
+	elif [ $npdfs -gt 1 ] ; then
+	    echo "Multiple pdfs found for user $user"
+	else
+	    pdf=$( find -name \*.pdf | head -n 1 )
+	fi
     fi
 }
 
 export success
-export failed
+export failed=
 success=
 for user in $users ; do 
     user=${user%/}
-    if [ -d "$user" -a -d "${user}/.git" ] ; then 
-	if [ ! -z "$trace" ] ; then echo && echo "Testing user $user"; fi
-	pushd "$user" >/dev/null
-	found=0
-	search_student "${user}" "${homeworkname}" "${altname}" "${hwgather}"
-	if [ $found -eq 0 ] ; then
-	    if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
-	    export failed="${failed} $user"
-	else
-	    if [ ! -z "$trace" ] ; then echo " .. success: ${user}" ; fi
-	    export success="${success} $user"
-	fi
-	popd >/dev/null
+    userdir=${homework}/${user}
+    if [ ! -d "$userdir" ] ; then 
+	echo "Homework ${homework} was not extracted for user ${user}"
+	continue
     fi
+    pushd "${userdir}" >/dev/null
+    find_pdf 
+    if [ ! -z "${pdf}" ] ; then
+	cp "${pdf}" "${dest}/${user}.pdf"
+    else
+	if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
+	export failed="${failed} $user"
+    fi
+    popd >/dev/null
 done 
+if [ ! -z "${failed}" ] ; then
+    echo "No pdf found for: ${failed}"
+fi
