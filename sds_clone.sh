@@ -12,9 +12,9 @@ if [ "$1" = "-h" ] ; then
 fi
 
 if [ $# -gt 0 ] ; then
-    repos="$( cat AllRepos.txt | grep $1 )"
+    repos="$( cat AllRepos.txt | grep -v "^#" | grep $1 )"
 else
-    repos="$( cat AllRepos.txt )"
+    repos="$( cat AllRepos.txt | grep -v "^#" )"
 fi
 echo "Cloning: ${repos}"
 
