@@ -19,9 +19,17 @@ fi
 echo "Cloning: ${repos}"
 
 for r in ${repos} ; do 
-    n=$r
-    n=${n%%/*}
-    n=${n##*:}
+    if [[ $r = http* ]] ; then
+	n=${r#*github.com/}
+	n=${n%/*}
+    else
+	n=$r
+	n=${n%%/*}
+	n=${n##*:}
+    fi
+    if [ -z "${n}" ] ; then
+	echo "ERROR could not determine student from <<${r}>>" && continue
+    fi
     if [ ! -d $n ] ; then 
 	echo "Cloning student: $n"
 	git clone $r $n
