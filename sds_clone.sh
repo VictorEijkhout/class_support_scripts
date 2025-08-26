@@ -33,5 +33,6 @@ for r in ${repos} ; do
     if [ ! -d $n ] ; then 
 	echo "Cloning student: $n"
 	git clone $r $n
+	( cd $n && git config pull.rebase false )
     fi
 done
