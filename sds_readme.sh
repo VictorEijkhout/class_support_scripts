@@ -32,41 +32,31 @@ if not users:
 
 userdict = {}
 for u in users.split():
-    userdict[u] = {}
-    matched = False
+    userdict[u] = {"realname":"", "taccname":"", "eid":"", "repo":"", }
     readmepath = f"{u}/README.md"
     if not os.path.exists(readmepath):
         continue
-    print( f"readme for: {u}" )
+    #print( f"Found readme for: {u}" )
     with open( readmepath ) as readme:
         for line in readme:
             if not re.search(":",line): continue
             line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".")
-            #print(line)
             k,v = line.split(":",1); k = k.lower()
-            v = v.lstrip(' ').rstrip(' ').lstrip('*').rstrip('*')
+            v = v.lstrip(' ').rstrip(' ').lstrip(r'\*+').rstrip(r'\*+')
             if re.search("tacc",k):
-                #print( f">> tacc: {v}" )
                 userdict[u]["taccname"] = v
             elif re.search("eid",k):
-                #print( f">> utid: {v}" )
                 userdict[u]["eid"] = v
             elif re.search("github",k):
-                #print( f">> repo: {v}" )
                 userdict[u]["repo"] = v
             elif re.search("name",k):
-                #print( f">> name: {v}" )
                 userdict[u]["realname"] = v
-            #print( f" match <<{match}>> to <<{v}>>" )
-            if match and re.search( match.lower(),v.lower() ):
-                #print( " .. true " )
-                matched = True
-    if match and not matched: continue
+    # print( f"{u}: {userdict[u]}" )
     try :
         realname = userdict[u]['realname']
-        lastname = re.search(r'[^ ]+$',realname).group(0)
-        firstname = re.sub(lastname,'',realname)
-        firstname = re.sub(' ','',firstname)
-        realname = f"{lastname},{firstname}"
-        print( f"{realname},{userdict[u]['taccname']},{userdict[u]['eid']},{userdict[u]['repo']}" )
+        namesplit= realname.rsplit(" ",1)
+        firstname = namesplit[0].lstrip(' ').rstrip(' ')
+        lastname  = namesplit[1].lstrip(' ').rstrip(' ')
+        realname = f"{lastname} {firstname}"
+        print( f"{realname},{userdict[u]['eid']},{userdict[u]['taccname']},{userdict[u]['repo']}" )
     except: continue
