@@ -38,19 +38,33 @@ for u in users.split():
         continue
     #print( f"Found readme for: {u}" )
     with open( readmepath ) as readme:
-        for line in readme:
-            if not re.search(":",line): continue
+        parsed = False
+        iparse = 0
+        for iline,line in enumerate(readme):
             line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".")
-            k,v = line.split(":",1); k = k.lower()
+            if re.search( ":",line ):
+                # assume line: "Name : My Name"
+                k,v = line.split(":",1); k = k.lower()
+            elif re.match( '-',line ):
+                # assume line: "- My Name"
+                k = ""; v = line.lstrip( r' *\-+ *' )
+            else: continue
+            iparse += 1
             v = v.lstrip(' ').rstrip(' ').lstrip(r'\*+').rstrip(r'\*+')
-            if re.search("tacc",k):
+            if re.search("tacc",k) or iparse==2 :
                 userdict[u]["taccname"] = v
-            elif re.search("eid",k):
+                parsed = True
+            elif re.search("eid",k) or iparse==3 :
                 userdict[u]["eid"] = v
-            elif re.search("github",k):
+                parsed = True
+            elif re.search("github",k) or iparse==4 :
                 userdict[u]["repo"] = v
-            elif re.search("name",k):
+                parsed = True
+            elif re.search("name",k) or iparse==1 :
                 userdict[u]["realname"] = v
+                parsed = True
+        if iline>1 and not parsed:
+            print( f">> Multiline readme for {u} failed to parse" )
     # print( f"{u}: {userdict[u]}" )
     try :
         realname = userdict[u]['realname']
