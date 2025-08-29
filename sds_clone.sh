@@ -16,7 +16,7 @@ if [ $# -gt 0 ] ; then
 else
     repos="$( cat AllRepos.txt | grep -v "^#" )"
 fi
-echo "Cloning: ${repos}"
+# echo "Cloning: ${repos}"
 
 for r in ${repos} ; do 
     if [[ $r = http* ]] ; then
