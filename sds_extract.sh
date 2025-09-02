@@ -55,15 +55,15 @@ echo "Extracting: ${homeworkname}"
 uline=$( echo "$users" | awk '{u=u " " $1} END {print u}' )
 echo "from users: ${uline}"
 
-hwgather="$(pwd)/${homeworkname}"
-echo " .. gathering in dir <<${hwgather}>>"
-mkdir -p "${hwgather}"
+export hwgatherdir="$(pwd)/${homeworkname}"
+echo " .. gathering in dir <<${hwgatherdir}>>"
+mkdir -p "${hwgatherdir}"
 
 ##
 ## copy student files, either single extension or all
 ##
 function copy_hw_files () {
-    u=$1 ; subdir="$2" ; hwgather=$3
+    u=$1 ; subdir="$2" ; hwgatherdir=$3
     if [ ! -z "${ext}" ] ; then
 	for src in "$subdir"/*.${ext} ; do 
 	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
@@ -72,7 +72,7 @@ function copy_hw_files () {
 		n=$( echo $src | cut -d '.' -f 1 )
 		e=$( echo $src | cut -d '.' -f 2 )
 		tgt=$u.$e
-		cp "$src" "${hwgather}/$tgt" 
+		cp "$src" "${hwgatherdir}/$tgt" 
 	    fi
 	done 2>/dev/null
     else
@@ -83,8 +83,8 @@ function copy_hw_files () {
 		n=$( echo $src | cut -d '.' -f 1 )
 		e=$( echo $src | cut -d '.' -f 2 )
 		tgt=$u.$e
-		echo "    copy <<$src>> to <<${hwgather}/$tgt>>" 
-		cp "$src" "${hwgather}/$tgt" 
+		echo "    copy <<$src>> to <<${hwgatherdir}/$tgt>>" 
+		cp "$src" "${hwgatherdir}/$tgt" 
 	    fi
 	done 2>/dev/null
     fi
@@ -95,11 +95,11 @@ export -f copy_hw_files
 ## copy whole directory from user
 ##
 function copy_hw_dir () {
-    u=$1 ; subdir="$2" ; hwgather=$3
+    u=$1 ; subdir="$2" ; hwgatherdir=$3
     srcdir="${subdir}"
     if [ ! -d "${srcdir}" ] ; then
 	echo "INTERNAL ERROR in pwd=$(pwd) no such srcdir: <<${srcdir}>>" && exit 1 ; fi
-    tardir="${hwgather}/${u}"
+    tardir="${hwgatherdir}/${u}"
     rm -rf "${tardir}"
     echo " .. copy <<${srcdir}>> to <<${tardir}>>"
     cp -r "${srcdir}" "${tardir}"
@@ -111,8 +111,12 @@ export -f copy_hw_dir
 ##
 function search_student_dir () {
     subdir="$1"; subdir=${subdir##*/} # remove ./
-    user=$2 ; homeworkname=$3 ; altname=$4 ; hwgather=$5 ; dir=$6
-    ## echo "Search <<$user/$subdir>> to match <<$homeworkname/$altname>>"
+    user=$2 ; homeworkname=$3 ; altname=$4 ; hwgatherdir=$5 ; dir=$6
+    if [ "${founddir}" != "0" ] ; then
+	## echo " .. not looking at <<$user/$$subdir>>"
+	return
+    fi
+    ## echo " .. match <<$user/$subdir>> to <<$homeworkname/$altname>>"
     ## see if it matches the homework
     normalized_name=$( echo "$subdir" | tr A-Z a-z | tr -d "_ " )
     if [ "${normalized_name}" = "${homeworkname}" ] ; then
@@ -134,9 +138,9 @@ function search_student_dir () {
 	    echo "Warning: has executables"
 	fi
 	if [ ! -z "${dir}" ] ; then
-	    copy_hw_dir "${user}" "${subdir}" "${hwgather}"
+	    copy_hw_dir "${user}" "${subdir}" "${hwgatherdir}"
 	else
-	    copy_hw_files "${user}" "${subdir}" "${hwgather}"
+	    copy_hw_files "${user}" "${subdir}" "${hwgatherdir}"
 	fi
 	return
     fi
@@ -147,15 +151,21 @@ export -f search_student_dir
 ## in the user dir search for `homeworkname' or `altname'
 ##
 function search_student () {
-    u=$1 ; homeworkname=$2 ; altname=$3 ; hwgather=$4
+    user=$1 ; homeworkname=$2 ; altname=$3 ; hwgatherdir=$4
     export founddir="0"
-    find . -maxdepth 1 -type d -exec \
-	 bash -c  'search_student_dir "$0" "$1" "$2" "$3" "$4" "$5" ' \
-                           {} "$u" "${homeworkname}" "${altname}" "$hwgather" "$dir" \; 
+    pushd "$user" >/dev/null
+    for dir in * ; do
+	if [ ! -d "${dir}" ] ; then continue ; fi
+	search_student_dir "${dir}" "$user" "${homeworkname}" "${altname}" "$hwgatherdir" "$dir"
+    done
+    # find . -maxdepth 1 -type d -exec \
+    # 	 bash -c  'search_student_dir "$0" "$1" "$2" "$3" "$4" "$5" ' \
+    #                        {} "$u" "${homeworkname}" "${altname}" "$hwgatherdir" "$dir" \; 
     if [ "${founddir}" = "0" ] ; then
 	## echo " .. not found ${homeworkname} or ${altname}"
 	found=0
     else found=1 ; fi
+    popd >/dev/null
 }
 
 export success
@@ -165,22 +175,19 @@ failed=
 for user in $users ; do 
     user=${user%/}
     # if is this a user, and not a homework gather:
-    rm -rf ${hwgather}/${user}
+    rm -rf ${hwgatherdir}/${user}
     if [ -d "$user" -a -d "${user}/.git" ] ; then 
-	if [ ! -z "$trace" ] ; then echo && echo "Testing user $user"; fi
-	pushd "$user" >/dev/null
+	if [ ! -z "$trace" ] ; then echo "Testing user $user"; fi
 	found=0
-	search_student "${user}" "${homeworkname}" "${altname}" "${hwgather}"
+	search_student "${user}" "${homeworkname}" "${altname}" "${hwgatherdir}"
 	if [ $found -eq 0 ] ; then
 	    if [ ! -z "$trace" ] ; then echo " .. failed: ${user}" ; fi
-	    export failed="${failed} $user"
+	    failed="${failed} $user"
 	else
 	    if [ ! -z "$trace" ] ; then echo " .. success: ${user}" ; fi
-	    export success="${success} $user"
+	    success="${success} $user"
 	fi
-	popd >/dev/null
     fi
 done 
-echo "see extract.log"
 echo "Found homework for: ${success}"
 echo "Not found for: ${failed}"
