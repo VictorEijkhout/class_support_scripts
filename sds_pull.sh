@@ -31,17 +31,23 @@ while [ $# -gt 0 ] ; do
     fi
 done
 
-##echo "Pulling repos for <<${users}>>"
+export success=0
+export fail=
 for d in ${users} ; do 
     if [ -d "$d" -a -d "$d/.git" ] ; then 
 	echo " .. pulling $d"
-	( cd "$d"
-	  git pull >../gitmsg 2>&1
-	  if [ $( cat ../gitmsg | grep "no such ref" | wc -l ) -gt 0 ] ; then
-	      echo " .. main branch problem in $d"
-	  fi
-	)
+	pushd "$d" >/dev/null 2>&1
+	git pull >../gitmsg 2>&1
+	if [ $( cat ../gitmsg | grep "no such ref" | wc -l ) -gt 0 ] ; then
+	    echo " .. main branch problem in $d"
+	    fail="$fail $d"
+	else
+	    success=$(( success+1 ))
+	fi
+	popd >/dev/null 2>&1
     fi
-done 2>&1 | tee pull.log
-echo "see pull.log"
+done # 2>&1 | tee pull.log
+echo "Pulled: $success sucessful"
+echo " .. failed: $fail"
+# echo "see pull.log"
 
