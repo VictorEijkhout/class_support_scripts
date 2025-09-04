@@ -72,7 +72,7 @@ function copy_hw_files () {
 		n=$( echo $src | cut -d '.' -f 1 )
 		e=$( echo $src | cut -d '.' -f 2 )
 		tgt=$u.$e
-		cp "$src" "${hwgatherdir}/$tgt" 
+		cp -p "$src" "${hwgatherdir}/$tgt" 
 	    fi
 	done 2>/dev/null
     else
@@ -84,7 +84,7 @@ function copy_hw_files () {
 		e=$( echo $src | cut -d '.' -f 2 )
 		tgt=$u.$e
 		echo "    copy <<$src>> to <<${hwgatherdir}/$tgt>>" 
-		cp "$src" "${hwgatherdir}/$tgt" 
+		cp -p "$src" "${hwgatherdir}/$tgt" 
 	    fi
 	done 2>/dev/null
     fi
@@ -102,7 +102,7 @@ function copy_hw_dir () {
     tardir="${hwgatherdir}/${u}"
     rm -rf "${tardir}"
     echo " .. copy <<${srcdir}>> to <<${tardir}>>"
-    cp -r "${srcdir}" "${tardir}"
+    cp -rp "${srcdir}" "${tardir}"
 }
 export -f copy_hw_dir
 
