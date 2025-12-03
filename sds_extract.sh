@@ -76,7 +76,7 @@ function copy_hw_files () {
 	    fi
 	done 2>/dev/null
     else
-	for src in "$subdir"/*.${ext} ; do 
+	for src in "$subdir"/* ; do 
 	    if [ ! -z "$x" ] ; then echo " .. test file $src" ; fi
 	    if [ -f "$src" ] ; then 
 		if [ ! -z "$x" ] ; then echo " .. found file $src" ; fi
@@ -189,5 +189,8 @@ for user in $users ; do
 	fi
     fi
 done 
+(
 echo "Found homework for: ${success}"
 echo "Not found for: ${failed}"
+) 2>&1 | tee extract.log
+echo "(see extract.log)"

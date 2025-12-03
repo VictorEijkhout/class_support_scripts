@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+# -*- python -*-
+
+import os
+import re
+import sys
+import subprocess
+
+script = sys.argv[0]
+sys.argv = sys.argv[1:]
+homework = "hw0"
+users = None
+match = None
+while len(sys.argv)>1:
+    if sys.argv[0]=="-h":
+        print( f"Usage: {script} [ -h ] [ -d homeworkdir ] [ -u user ] string" )
+        sys.exit(0)
+    elif sys.argv[0]=="-d":
+        homeworkdir = sys.argv[1]
+        sys.argv = sys.argv[2:]
+    elif sys.argv[0]=="-u":
+        users = sys.argv[1]
+        sys.argv = sys.argv[2:]
+    elif len(sys.argv)==1 and not re.match(r'\-',sys.argv[0]):
+        match = sys.argv[0]
+        #print( f"matching {match}" )
+        break
+    else:
+        raise Exception( f"Unrecognized option or parameter <<{sys.argv[0]}>>" )
+searchstring = sys.argv[0]
+if not os.path.isdir(homeworkdir):
+    raise Exception( f"No such homework directory: {homeworkdir}" )
+
+if not users:
+    command = "sds_users.sh"
+    p = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
+    users = p.communicate()[0].strip().decode('utf-8')
+
+for u in users.split():
+    command = f"grep -l {searchstring} {homeworkdir}/{u}/*.cpp 2>/dev/null"
+    p = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE)
+    found = p.communicate()[0].strip().decode('utf-8')
+    print(found)
+    
