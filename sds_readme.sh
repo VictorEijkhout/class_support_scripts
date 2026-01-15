@@ -44,28 +44,30 @@ for u in users.split():
             line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".")
             if re.search( ":",line ):
                 # assume line: "Name : My Name"
-                k,v = line.split(":",1); k = k.lower()
+                k,v = line.split(":",1); k = k.strip( r" *" ).lower()
+                #print( f"{k} : {v}" )
             elif re.match( '-',line ):
                 # assume line: "- My Name"
                 k = ""; v = line.lstrip( r' *\-+ *' )
             else: continue
             iparse += 1
             v = v.lstrip(' ').rstrip(' ').lstrip(r'\*+').rstrip(r'\*+')
-            if re.search("tacc",k) or iparse==2 :
+            #print( f"key <<{k}>> <<{v}>>" )
+            if re.search("tacc",k) or iparse==3 :
                 userdict[u]["taccname"] = v
                 parsed = True
-            elif re.search("eid",k) or iparse==3 :
+            elif re.search("eid",k) or iparse==2 :
                 userdict[u]["eid"] = v
                 parsed = True
             elif re.search("github",k) or iparse==4 :
                 userdict[u]["repo"] = v
                 parsed = True
-            elif re.search("name",k) or iparse==1 :
+            elif re.search("real",k) or re.search("name",k) or iparse==1 :
                 userdict[u]["realname"] = v
                 parsed = True
         if iline>1 and not parsed:
             print( f">> Multiline readme for {u} failed to parse" )
-    # print( f"{u}: {userdict[u]}" )
+    #print( f"{u}: {userdict[u]}" )
     try :
         realname = userdict[u]['realname']
         namesplit= realname.rsplit(" ",1)
