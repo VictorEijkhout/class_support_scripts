@@ -10,7 +10,7 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
+    echo "Usage: $0 [ -m : use mpi ] [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
     echo "    -r : run after building"
     echo "    -s : build in a subdirectory"
 }
@@ -19,6 +19,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
     usage && exit 0
 fi
 
+mpi=
 run=
 subdir=
 users=
@@ -30,6 +31,8 @@ while [ $# -gt 1 ] ; do
 	x=1 && shift
     elif [ "$1" = "-d" ] ; then
 	dir=1 && shift
+    elif [ "$1" = "-m" ] ; then
+	mpi=1 && shift
     elif [ "$1" = "-r" ] ; then
 	run=1 && shift
     elif [ "$1" = "-s" ] ; then
@@ -66,23 +69,29 @@ function build () {
     echo "Using build dir: <<${builddir}>>"
     pushd ${builddir}
     export CXX=${TACC_CXX}
-    cmake -D CMAKE_CXX_COMPILER=${TACC_CXX} \
+    export CC=${TACC_CC}
+    #  -D CMAKE_CXX_COMPILER=${TACC_CXX} 
+    cmake \
 	  "${userdir}"
     make
     if [ ! -z ${run} ] ; then
-	for f in * ; do
-	    if [ -x "$f" -a ! -d "$f" ] ; then
-		if [ ! -z "${SLURM_JOB_UID}" ] ; then
-		    cmdline="ibrun -n 4 $f"
-		else
-		    cmdline="./$f"
-		fi
-		echo "cmdline=$cmdline"
-		eval $cmdline
-	    fi
-	done
+	find_executable $user $userdir
+	cmdline="ibrun -n 4 $executable"
+    else
+	cmdline="./$executable"
     fi
+    echo "cmdline=$cmdline"
+    eval $cmdline
     popd
+}
+
+function find_executable () {
+    user=$1 userdir=$2
+    executable=$( cat "$userdir"/CMakeLists.txt | grep add_executable | cut -d '(' -f 2 )
+    echo $executable
+    executable=$( echo ${executable} | sed -e 's/^ *//' -e 's/ .*$//' )
+    echo $executable
+    echo "User $1, finding executable: $executable"
 }
 
 if [ -z "$users" ] ; then
