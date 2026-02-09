@@ -42,6 +42,7 @@ for u in users.split():
         iparse = 0
         for iline,line in enumerate(readme):
             line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".")
+            if re.match( "#",line ): continue
             if re.search( ":",line ):
                 # assume line: "Name : My Name"
                 k,v = line.split(":",1); k = k.strip( r" *" ).lower()
