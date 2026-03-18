@@ -10,7 +10,7 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -m : use mpi ] [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
+    echo "Usage: $0 [ -m 12 : mpi procs ] [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
     echo "    -r : run after building"
     echo "    -s : build in a subdirectory"
 }
@@ -32,7 +32,7 @@ while [ $# -gt 1 ] ; do
     elif [ "$1" = "-d" ] ; then
 	dir=1 && shift
     elif [ "$1" = "-m" ] ; then
-	mpi=1 && shift
+	shift && mpi=$1 && shift
     elif [ "$1" = "-r" ] ; then
 	run=1 && shift
     elif [ "$1" = "-s" ] ; then
@@ -76,9 +76,11 @@ function build () {
     make
     if [ ! -z ${run} ] ; then
 	find_executable $user $userdir
-	cmdline="ibrun -n 4 $executable"
-    else
-	cmdline="./$executable"
+	if [ ! -z "${mpi}" ] ; then 
+	    cmdline="ibrun -n ${mpi} ./$executable"
+	else
+	    cmdline="./$executable"
+	fi
     fi
     echo "cmdline=$cmdline"
     eval $cmdline
