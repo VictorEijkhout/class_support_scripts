@@ -10,7 +10,8 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -m 12 : mpi procs ] [ -r (run) ] [ -s subdir ]"
+    echo "Usage: $0 [ -s subdir ]"
+    echo "    [ -m 12 : mpi procs ] [ -o : omp threads ] [ -r (run) ]"
     echo "    [ -u username ] [ -v userexclude ] [ -x ] homeworkname"
 }
 
@@ -19,6 +20,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
 fi
 
 mpi=
+omp=
 run=
 subdir=
 users=
@@ -31,10 +33,12 @@ while [ $# -gt 1 ] ; do
 	x=1 && shift
     elif [ "$1" = "-d" ] ; then
 	dir=1 && shift
-    elif [ "$1" = "-m" ] ; then
-	shift && mpi=$1 && shift
     elif [ "$1" = "-r" ] ; then
 	run=1 && shift
+    elif [ "$1" = "-m" ] ; then
+	shift && mpi=$1 && shift
+    elif [ "$1" = "-o" ] ; then
+	shift && omp=$1 && shift
     elif [ "$1" = "-s" ] ; then
 	shift && subdir=$1 && shift
     elif [ "$1" = "-u" ] ; then
@@ -75,7 +79,7 @@ function build () {
     export CXX=${TACC_CXX}
     export CC=${TACC_CC}
     #  -D CMAKE_CXX_COMPILER=${TACC_CXX} 
-    cmake \
+    CXX=${TACC_CXX} CC=${TACC_CC} cmake \
 	-D CMAKE_BUILD_TYPE=Debug \
 	-D CMAKE_VERBOSE_MAKEFILE=ON \
 	  "${userdir}"
@@ -84,6 +88,8 @@ function build () {
 	find_executable $user $userdir
 	if [ ! -z "${mpi}" ] ; then 
 	    cmdline="ibrun -n ${mpi} ./$executable"
+	elif [ ! -z "${omp}" ] ; then
+	    cmdline="OMP_NUM_THREADS=${omp} ./$executable"
 	else
 	    cmdline="./$executable"
 	fi
