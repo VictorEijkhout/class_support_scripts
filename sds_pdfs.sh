@@ -1,7 +1,13 @@
 #!/bin/bash
+################################################################
+####
+#### Extract pdf from homework dir
+####
+################################################################
+
 
 function usage {
-    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -u user ] homework"
+    echo "Usage: $0 [ -h ] [ -x ] [ -q ] [ -u user1,user2 ] homework"
     echo "    -x : command execution tracing"
     echo "    -q : quiet on missing and double pdfs"
     exit 0
@@ -20,7 +26,7 @@ while [ $# -gt 1 ] ; do
     elif [ "$1" = "-a" ] ; then
 	shift && altname=$1 && shift
     elif [ "$1" = "-u" ] ; then
-	shift && users=$1 && shift
+	shift && users="$( echo $1 | tr ',' ' ' | tr -d '/' )" && shift
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     elif [ "$1" = "-q" ] ; then
