@@ -10,9 +10,8 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -m : use mpi ] [ -r (run) ] [ -s subdir ] [ -u username ] [ -x ] homeworkname"
-    echo "    -r : run after building"
-    echo "    -s : build in a subdirectory"
+    echo "Usage: $0 [ -m 12 : mpi procs ] [ -r (run) ] [ -s subdir ]"
+    echo "    [ -u username ] [ -v userexclude ] [ -x ] homeworkname"
 }
 
 if [ $# -lt 1 -o "$1" = "-h" ] ; then
@@ -23,6 +22,7 @@ mpi=
 run=
 subdir=
 users=
+vsers=
 x=
 while [ $# -gt 1 ] ; do
     if [ "$1" = "-h" ] ; then
@@ -32,13 +32,17 @@ while [ $# -gt 1 ] ; do
     elif [ "$1" = "-d" ] ; then
 	dir=1 && shift
     elif [ "$1" = "-m" ] ; then
-	mpi=1 && shift
+	shift && mpi=$1 && shift
     elif [ "$1" = "-r" ] ; then
 	run=1 && shift
     elif [ "$1" = "-s" ] ; then
 	shift && subdir=$1 && shift
     elif [ "$1" = "-u" ] ; then
 	shift && users=$1 && shift
+	echo "Only user(s): ${users}"
+    elif [ "$1" = "-v" ] ; then
+	shift && vsers=$1 && shift
+	echo "Excluding users: ${vsers}"
     elif [ "$1" = "-x" ] ; then
 	x=1 && shift
     fi
@@ -72,13 +76,17 @@ function build () {
     export CC=${TACC_CC}
     #  -D CMAKE_CXX_COMPILER=${TACC_CXX} 
     cmake \
+	-D CMAKE_BUILD_TYPE=Debug \
+	-D CMAKE_VERBOSE_MAKEFILE=ON \
 	  "${userdir}"
-    make
+    make V=1
     if [ ! -z ${run} ] ; then
 	find_executable $user $userdir
-	cmdline="ibrun -n 4 $executable"
-    else
-	cmdline="./$executable"
+	if [ ! -z "${mpi}" ] ; then 
+	    cmdline="ibrun -n ${mpi} ./$executable"
+	else
+	    cmdline="./$executable"
+	fi
     fi
     echo "cmdline=$cmdline"
     eval $cmdline
@@ -107,6 +115,12 @@ fi
 pushd ${hw}
 for user in $users ; do 
     user=${user%/}
+    if [ ! -z "${vsers}" ] ; then
+	# see if this is an excluded user
+	if [[ ${vsers} =~ .*${user}.* ]] ; then
+	    continue
+	fi
+    fi
     echo && echo "==== student: ${user}"
     userdir=$(pwd)/${user}
     if [ ! -z "${subdir}" ] ; then userdir="${userdir}"/"${subdir}" ; fi
