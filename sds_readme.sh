@@ -41,7 +41,7 @@ for u in users.split():
         parsed = False
         iparse = 0
         for iline,line in enumerate(readme):
-            line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".")
+            line = line.strip('\n').strip(r"\\").strip("<br/>").strip(".").lstrip(r'\#')
             if re.match( "#",line ): continue
             if re.search( ":",line ):
                 # assume line: "Name : My Name"
@@ -52,7 +52,7 @@ for u in users.split():
                 k = ""; v = line.lstrip( r' *\-+ *' )
             else: continue
             iparse += 1
-            v = v.lstrip(' ').rstrip(' ').lstrip(r'\*+').rstrip(r'\*+')
+            v = v.lstrip(' ').rstrip(' ').lstrip(r'\*+').rstrip(r'\*+').lstrip(r'\#')
             #print( f"key <<{k}>> <<{v}>>" )
             if re.search("tacc",k) or iparse==3 :
                 userdict[u]["taccname"] = v
