@@ -10,7 +10,7 @@
 ################################################################
 
 function usage {
-    echo "Usage: $0 [ -s subdir ]"
+    echo "Usage: $0 [ -s subdir ] [ --nocmake ]"
     echo "    [ -m 12 : mpi procs ] [ -o : omp threads ] [ -r (run) ]"
     echo "    [ -u username ] [ -v userexclude ] [ -x ] homeworkname"
 }
@@ -19,6 +19,7 @@ if [ $# -lt 1 -o "$1" = "-h" ] ; then
     usage && exit 0
 fi
 
+cmake=1
 mpi=
 omp=
 run=
@@ -37,6 +38,9 @@ while [ $# -gt 1 ] ; do
 	run=1 && shift
     elif [ "$1" = "-m" ] ; then
 	shift && mpi=$1 && shift
+    elif [ "$1" = "--nocmake" ] ; then
+	echo "not using cmake: plain compile"
+	cmake="" && shift
     elif [ "$1" = "-o" ] ; then
 	shift && omp=$1 && shift
     elif [ "$1" = "-s" ] ; then
@@ -63,17 +67,20 @@ if [ ! -d "${hwdir}" ] ; then
     echo "ERROR can not find homework directory: <<$hwdir>>; extract first?"
     usage && exit 2
 else
-    # everything happens in the homework dir
-    if [ ! -z ${x} ] ; then echo "Working in homework dir <<${hwdir}>>" ; fi 
+    echo "================================================================"
+    echo " Building ${hw}"
+    echo " Leaving result in build_${hw}/<user>"
+    echo "================================================================"
+    echo 
 fi
 
 ##
-## build in the homework directory
+## cmake/build/run in the homework directory
 ##
 function build () {
     user=$1 ; userdir=$2 # userdir is absolute path
     ## userdir="$(pwd)/${user}_dir"
-    builddir="$(pwd)/build_${user}" && rm -rf "${builddir}" && mkdir "${builddir}"
+    builddir="$(pwd)/build_${hw}/${user}" && rm -rf "${builddir}" && mkdir "${builddir}"
     echo "Using build dir: <<${builddir}>>"
     pushd ${builddir}
     export CXX=${TACC_CXX}
@@ -96,7 +103,30 @@ function build () {
     fi
     echo "cmdline=$cmdline"
     eval $cmdline
-    popd
+    popd # from user-specific build dir
+}
+
+##
+## make/run
+##
+function compile() {
+    user=$1 ; userdir=$2 # userdir is absolute path
+    builddir="$(pwd)/build_${hw}/${user}" && rm -rf "${builddir}" && mkdir -p "${builddir}"
+    echo "Using build dir: <<${builddir}>>"
+    pushd ${builddir}
+    export CXX=${TACC_CXX}
+    export CC=${TACC_CC}
+    files=$( ls ${userdir}/*.{cpp,cxx,hpp,h} 2>/dev/null )
+    if [ -z "${files}" ] ; then
+	echo "ERROR: user=${user} no input files found"
+    else
+	echo -e "====\nCompiler user=${user} with files=${files}\n===="
+	${CXX} -std=c++23 -o ${hw} ${files}
+	if [ $? -gt 0 ] ; then
+	    echo "ERROR: user=${user} compilation problems"
+	fi
+    fi
+    popd # out of the builddir    
 }
 
 function find_executable () {
@@ -131,10 +161,15 @@ for user in $users ; do
     userdir=$(pwd)/${user}
     if [ ! -z "${subdir}" ] ; then userdir="${userdir}"/"${subdir}" ; fi
     if [ -d "${userdir}" ] ; then
-	if [ ! -f "${userdir}"/CMakeLists.txt ] ; then
-	    echo "WARNING can not find CMakeLists.txt for user <<$user>>" && continue
-	fi
-	build ${user} "${userdir}" 2>&1 | tee ${user}.log
+	if [ ! -z "${cmake}" ] ; then
+	    if [ ! -f "${userdir}"/CMakeLists.txt ] ; then
+		echo "WARNING can not find CMakeLists.txt for user <<$user>>"
+		continue
+	    fi
+	    build ${user} "${userdir}"
+	else
+	    compile ${user} "${userdir}"
+	fi 2>&1 | tee ${user}.log
     else
 	echo "WARNING unknown user: <<${userdir}>> not found in <<$hw>>"
     fi
